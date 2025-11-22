@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "../../Utils/axiosConfig";
+import axios from "../../Utils/axiosConfig.js";
 import { toast } from "react-toastify";
 import { FaSearch } from "react-icons/fa";
 import { IoArrowBackSharp } from "react-icons/io5";
