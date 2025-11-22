@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import axios from "../../utils/axiosConfig";
+import axios from "../../Utils/axiosConfig";
 import { IoArrowBackSharp, IoSend } from "react-icons/io5";
 import { TiMessages } from "react-icons/ti";
 import { useAuth } from "../../Context/AuthContext";
