@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
+import axios from "../../utils/axiosConfig";
 import { IoArrowBackSharp, IoSend } from "react-icons/io5";
 import { TiMessages } from "react-icons/ti";
 import { useAuth } from "../../Context/AuthContext";
@@ -17,12 +17,24 @@ const MessageContainer = ({ onBackUser }) => {
   const [sendData, setSendData] = useState("");
   const lastMessageRef = useRef();
 
+  const getProfilePicUrl = (pic) => {
+    if (!pic)
+      return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+    if (pic.startsWith("http")) return pic;
+    return `http://localhost:5000${pic.startsWith("/") ? pic : `/${pic}`}`;
+  };
+
   // 🔔 Listen for new messages
   useEffect(() => {
     if (!socket) return;
 
     const handleNewMessage = (newMessage) => {
-      if (selectedConversation?._id === newMessage.conversationId) {
+      // Check if message is between current user and selected user
+      const isMessageForCurrentChat =
+        (newMessage.senderId === selectedConversation?._id && newMessage.receiverId === authUser?._id) ||
+        (newMessage.receiverId === selectedConversation?._id && newMessage.senderId === authUser?._id);
+
+      if (isMessageForCurrentChat) {
         setMessage((prev) => [...prev, newMessage]);
         const sound = new Audio(notify);
         sound.play();
@@ -71,11 +83,7 @@ const MessageContainer = ({ onBackUser }) => {
       setMessage((prev) => [...prev, res.data]);
       setSendData("");
 
-      socket.emit("sendMessage", {
-        ...res.data,
-        senderId: authUser._id,
-        receiverId: selectedConversation._id,
-      });
+      // Message is already emitted by the backend, no need to emit again
     } catch (error) {
       console.log(error);
     } finally {
@@ -103,7 +111,7 @@ const MessageContainer = ({ onBackUser }) => {
                 <IoArrowBackSharp size={22} />
               </button>
               <img
-                src={selectedConversation?.profilepic}
+                src={getProfilePicUrl(selectedConversation?.profilepic)}
                 alt="dp"
                 className="w-9 h-9 rounded-full object-cover border border-white"
               />
@@ -122,14 +130,12 @@ const MessageContainer = ({ onBackUser }) => {
                 <div
                   key={message?._id}
                   ref={lastMessageRef}
-                  className={`flex ${
-                    message.senderId === authUser._id ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${message.senderId === authUser._id ? "justify-end" : "justify-start"
+                    }`}
                 >
                   <div
-                    className={`px-4 py-2 rounded-2xl text-white max-w-xs break-words shadow-sm ${
-                      message.senderId === authUser._id ? "bg-sky-600" : "bg-gray-500"
-                    }`}
+                    className={`px-4 py-2 rounded-2xl text-white max-w-xs break-words shadow-sm ${message.senderId === authUser._id ? "bg-sky-600" : "bg-gray-500"
+                      }`}
                   >
                     {message?.message}
                     <div className="text-[10px] text-right opacity-75 mt-1">

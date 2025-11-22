@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });``
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 // Register
@@ -14,7 +14,18 @@ const userRegister = async (req, res) => {
     if (existingUser) return res.status(400).json({ success: false, message: "Username or Email already exists" });
 
     const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ fullname, username, email, password: hashPassword, gender, profilepic: req.file?.path });
+
+    // Get Cloudinary URL from uploaded file
+    const profilepicUrl = req.file?.path || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+
+    const newUser = new User({
+      fullname,
+      username,
+      email,
+      password: hashPassword,
+      gender,
+      profilepic: profilepicUrl
+    });
     await newUser.save();
 
     res.cookie("jwt", generateToken(newUser._id), { httpOnly: true });

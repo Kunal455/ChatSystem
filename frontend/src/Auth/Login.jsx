@@ -1,5 +1,5 @@
-import axios from "axios";
-import React, { useState } from "react";
+import axios from "../utils/axiosConfig";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../Context/AuthContext";
@@ -10,7 +10,14 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
-  const {setAuthUser} = useAuth();
+  const { authUser, setAuthUser, loading: authLoading } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && authUser) {
+      navigate("/");
+    }
+  }, [authUser, authLoading, navigate]);
 
   const handleInput = (e) => {
     setUserInput({
@@ -114,3 +121,4 @@ const Login = () => {
 };
 
 export default Login;
+

@@ -17,19 +17,19 @@ const sendMessage = async (req, res) => {
     }
 
     const newMessage = new Message({
-  senderId,
-  receiverId: receiverId, // fix typo
-  message,
-  conversationId: chat._id,
-});
+      senderId,
+      receiverId: receiverId,
+      message,
+      conversationId: chat._id,
+    });
 
 
     chat.messages.push(newMessage._id);
 
     await Promise.all([chat.save(), newMessage.save()]);
 
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) io.to(receiverSocketId).emit("newMessage", newMessage);
+    // Emit to receiver's room
+    io.to(receiverId.toString()).emit("newMessage", newMessage);
 
     res.status(201).json(newMessage);
   } catch (error) {
@@ -43,12 +43,11 @@ const getMessage = async (req, res) => {
     const senderId = req.user._id;
 
     const chat = await Conversation.findOne({
-  participants: { $all: [senderId, receiverId] },
-}).populate({
-  path: "messages",
-  populate: { path: "senderId", select: "username profilepic" }
-});
-
+      participants: { $all: [senderId, receiverId] },
+    }).populate({
+      path: "messages",
+      populate: { path: "senderId", select: "username profilepic" }
+    });
 
     res.status(200).json(chat ? chat.messages : []);
   } catch (error) {

@@ -1,12 +1,19 @@
-import axios from "axios";
-import React, { useState } from "react";
+import axios from "../utils/axiosConfig";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../Context/AuthContext";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { setAuthUser } = useAuth();
+  const { authUser, setAuthUser, loading: authLoading } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && authUser) {
+      navigate("/");
+    }
+  }, [authUser, authLoading, navigate]);
   const [loading, setLoading] = useState(false);
   const [profilepic, setProfilepic] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -73,7 +80,7 @@ const Register = () => {
       }
 
       // ✅ FIX: Correctly get the nested 'data.user' object
-      const user = data.user; 
+      const user = data.user;
       localStorage.setItem("chatapp", JSON.stringify(user));
       setAuthUser(user);
 
@@ -182,3 +189,5 @@ const Register = () => {
 };
 
 export default Register;
+
+

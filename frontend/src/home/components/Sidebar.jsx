@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../../utils/axiosConfig";
 import { toast } from "react-toastify";
 import { FaSearch } from "react-icons/fa";
 import { IoArrowBackSharp } from "react-icons/io5";
@@ -87,10 +87,18 @@ const Sidebar = ({ onSelectUser }) => {
     setSearchInput("");
   };
 
-  const handleLogOut = () => {
-    localStorage.removeItem("token");
-    setAuthUser(null);
-    navigate("/login");
+  const handleLogOut = async () => {
+    try {
+      // Call logout endpoint to clear cookie on server
+      await axios.post("/api/auth/logout");
+    } catch (error) {
+      console.log("Logout error:", error);
+    } finally {
+      // Clear local storage and state
+      localStorage.removeItem("chatapp");
+      setAuthUser(null);
+      navigate("/login");
+    }
   };
 
   const getProfilePicUrl = (pic) => {
@@ -133,16 +141,14 @@ const Sidebar = ({ onSelectUser }) => {
               <div
                 key={user._id}
                 onClick={() => handleUserClick(user)}
-                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${
-                  selectedUserId === user._id ? "bg-sky-200" : "hover:bg-sky-100"
-                }`}
+                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${selectedUserId === user._id ? "bg-sky-200" : "hover:bg-sky-100"
+                  }`}
               >
                 <img
                   src={getProfilePicUrl(user.profilepic)}
                   alt={user.username}
-                  className={`w-10 h-10 rounded-full object-cover ${
-                    onlineUser?.includes(user._id) ? "ring-2 ring-green-500" : ""
-                  }`}
+                  className={`w-10 h-10 rounded-full object-cover ${onlineUser?.includes(user._id) ? "ring-2 ring-green-500" : ""
+                    }`}
                 />
                 <p className="font-semibold text-gray-800">{user.username}</p>
               </div>
@@ -164,17 +170,15 @@ const Sidebar = ({ onSelectUser }) => {
             <div
               key={user._id}
               onClick={() => handleUserClick(user)}
-              className={`flex items-center justify-between p-2 rounded-lg cursor-pointer ${
-                selectedUserId === user._id ? "bg-sky-200" : "hover:bg-sky-100"
-              }`}
+              className={`flex items-center justify-between p-2 rounded-lg cursor-pointer ${selectedUserId === user._id ? "bg-sky-200" : "hover:bg-sky-100"
+                }`}
             >
               <div className="flex items-center gap-3">
                 <img
                   src={getProfilePicUrl(user.profilepic)}
                   alt={user.username}
-                  className={`w-10 h-10 rounded-full object-cover ${
-                    onlineUser?.includes(user._id) ? "ring-2 ring-green-500" : ""
-                  }`}
+                  className={`w-10 h-10 rounded-full object-cover ${onlineUser?.includes(user._id) ? "ring-2 ring-green-500" : ""
+                    }`}
                 />
                 <p className="font-semibold text-gray-800">{user.username}</p>
               </div>

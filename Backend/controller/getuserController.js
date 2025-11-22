@@ -46,4 +46,16 @@ const getUserById = async (req, res) => {
   }
 };
 
-module.exports = { getUser, getcurrentchatters, getUserById };
+// Get current logged-in user (verify token)
+const getCurrentUser = async (req, res) => {
+  try {
+    // req.user is set by isLogin middleware
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { getUser, getcurrentchatters, getUserById, getCurrentUser };

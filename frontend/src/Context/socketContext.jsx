@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import io from "socket.io-client";
-import { useAuth } from "/src/Context/AuthContext";
+import { useAuth } from "../Context/AuthContext";
 
 
 const SocketContext = createContext();
@@ -43,6 +43,7 @@ export const SocketContextProvider = ({ children }) => {
         setSocket(null);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser]);
 
   return (
