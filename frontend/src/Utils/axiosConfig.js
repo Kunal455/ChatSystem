@@ -1,9 +1,8 @@
 import axios from "axios";
 
-// Create axios instance with default config
 const axiosInstance = axios.create({
-    withCredentials: true, // Important for cookies to work with CORS
+    baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+    withCredentials: true,
 });
 
 export default axiosInstance;
-

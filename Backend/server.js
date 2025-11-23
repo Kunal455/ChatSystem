@@ -28,8 +28,8 @@ app.use((req, res, next) => {
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Removed static uploads route - using Cloudinary now
-// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Static uploads route - serves local files when Cloudinary is not configured
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRouter);
 app.use("/api/message", messageRouter);
