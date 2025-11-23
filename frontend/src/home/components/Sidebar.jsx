@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "../../Utils/axiosConfig.js";
 import { toast } from "react-toastify";
 import { FaSearch } from "react-icons/fa";
@@ -25,21 +25,28 @@ const Sidebar = ({ onSelectUser }) => {
   const [newMessageUsers, setNewMessageUsers] = useState({});
   const [showFullImage, setShowFullImage] = useState(false);
 
+  // 🔊 preload sound
+  const notifSound = useRef(new Audio(notify)).current;
+
   // 🔔 Listen for incoming messages
   useEffect(() => {
     if (!socket) return;
+
     const handleNewMessage = (newMessage) => {
       if (newMessage.receiverId === authUser?._id) {
         setNewMessageUsers((prev) => ({
           ...prev,
           [newMessage.senderId]: true,
         }));
-        new Audio(notify).play();
+        notifSound.play();
       }
     };
+
     socket.on("newMessage", handleNewMessage);
+
     return () => socket.off("newMessage", handleNewMessage);
   }, [socket, authUser?._id]);
+
 
   // 👤 Fetch chat users
   useEffect(() => {
@@ -57,15 +64,20 @@ const Sidebar = ({ onSelectUser }) => {
     fetchChatUsers();
   }, []);
 
+
   // 🔍 Search users
   const handleSearchSubmit = async (e) => {
     e.preventDefault();
+
     if (!searchInput.trim()) return toast.info("Please enter a username");
+
     setLoading(true);
     try {
       const res = await axios.get(`/api/user/search?search=${encodeURIComponent(searchInput)}`);
+
       setSearchUser(Array.isArray(res.data) ? res.data : res.data?.users ?? []);
-      if ((res.data?.length ?? 0) === 0) toast.info("User not found");
+
+      if (!res.data?.users?.length) toast.info("User not found");
     } catch {
       toast.error("Search failed");
     } finally {
@@ -78,7 +90,6 @@ const Sidebar = ({ onSelectUser }) => {
     setSelectedConversation(user);
     setSelectedUserId(user._id);
 
-    // Clear unread badge
     setNewMessageUsers((prev) => ({ ...prev, [user._id]: false }));
   };
 
@@ -87,31 +98,35 @@ const Sidebar = ({ onSelectUser }) => {
     setSearchInput("");
   };
 
+
   const handleLogOut = async () => {
     try {
-      // Call logout endpoint to clear cookie on server
       await axios.post("/api/auth/logout");
     } catch (error) {
       console.log("Logout error:", error);
     } finally {
-      // Clear local storage and state
       localStorage.removeItem("chatapp");
       setAuthUser(null);
       navigate("/login");
     }
   };
 
+
   const getProfilePicUrl = (pic) => {
     if (!pic)
       return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
-    if (pic.startsWith("http")) return pic;
-    return `https://chat-backend-u9ll.onrender.com${pic.startsWith("/") ? pic : `/${pic}`}`;
 
+    if (pic.startsWith("http")) return pic;
+
+    return `https://chat-backend-u9ll.onrender.com${pic.startsWith("/") ? pic : `/${pic}`}`;
+  };
 
   const userProfilePic = getProfilePicUrl(authUser?.profilepic);
 
+
   return (
     <div className="flex flex-col w-full h-full bg-gradient-to-b from-sky-100 to-sky-50 rounded-xl shadow-lg overflow-hidden">
+      
       {/* Search */}
       <div className="flex flex-col p-4 gap-4">
         <form onSubmit={handleSearchSubmit} className="flex items-center bg-white rounded-full shadow px-3 py-2">
@@ -131,8 +146,8 @@ const Sidebar = ({ onSelectUser }) => {
         </form>
       </div>
 
-      {/* Chat / Search Results */}
-      <div className="flex-1 overflow-y-auto px-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+      {/* Chat / Search */}
+      <div className="flex-1 overflow-y-auto px-4 space-y-2">
         {loading ? (
           <div className="text-center py-5 text-gray-600">Loading...</div>
         ) : searchUser.length > 0 ? (
@@ -141,18 +156,18 @@ const Sidebar = ({ onSelectUser }) => {
               <div
                 key={user._id}
                 onClick={() => handleUserClick(user)}
-                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${selectedUserId === user._id ? "bg-sky-200" : "hover:bg-sky-100"
-                  }`}
+                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${
+                  selectedUserId === user._id ? "bg-sky-200" : "hover:bg-sky-100"
+                }`}
               >
                 <img
                   src={getProfilePicUrl(user.profilepic)}
-                  alt={user.username}
-                  className={`w-10 h-10 rounded-full object-cover ${onlineUser?.includes(user._id) ? "ring-2 ring-green-500" : ""
-                    }`}
+                  className="w-10 h-10 rounded-full object-cover"
                 />
                 <p className="font-semibold text-gray-800">{user.username}</p>
               </div>
             ))}
+
             <button
               onClick={handleSearchBack}
               className="flex items-center gap-2 bg-gray-200 rounded-full px-3 py-1 mt-3"
@@ -162,7 +177,7 @@ const Sidebar = ({ onSelectUser }) => {
           </>
         ) : chatUser.length === 0 ? (
           <div className="flex flex-col items-center mt-10 text-gray-600">
-            <p>Why are you alone? 🤔</p>
+            <p>No chats yet.</p>
             <p>Search username to chat</p>
           </div>
         ) : (
@@ -170,50 +185,52 @@ const Sidebar = ({ onSelectUser }) => {
             <div
               key={user._id}
               onClick={() => handleUserClick(user)}
-              className={`flex items-center justify-between p-2 rounded-lg cursor-pointer ${selectedUserId === user._id ? "bg-sky-200" : "hover:bg-sky-100"
-                }`}
+              className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer ${
+                selectedUserId === user._id ? "bg-sky-200" : "hover:bg-sky-100"
+              }`}
             >
               <div className="flex items-center gap-3">
                 <img
                   src={getProfilePicUrl(user.profilepic)}
-                  alt={user.username}
-                  className={`w-10 h-10 rounded-full object-cover ${onlineUser?.includes(user._id) ? "ring-2 ring-green-500" : ""
-                    }`}
+                  className="w-10 h-10 rounded-full object-cover"
                 />
                 <p className="font-semibold text-gray-800">{user.username}</p>
               </div>
 
-              {newMessageUsers[user._id] ? (
+              {newMessageUsers[user._id] && (
                 <div className="rounded-full bg-green-700 text-sm text-white px-[6px]">
                   +1
                 </div>
-              ) : null}
+              )}
             </div>
           ))
         )}
       </div>
 
-      {/* Bottom DP + Email + Logout */}
+
+      {/* bottom bar */}
       <div className="flex items-center justify-between p-4 border-t border-gray-300 bg-white/70">
         <div className="flex items-center gap-3">
           <div
             onClick={() => setShowFullImage(true)}
             className="w-12 h-12 rounded-full border-2 border-green-500 cursor-pointer overflow-hidden"
           >
-            <img src={userProfilePic} alt="Profile" className="w-full h-full object-cover" />
+            <img src={userProfilePic} className="w-full h-full object-cover" />
           </div>
-          <div className="flex flex-col">
+
+          <div>
             <p className="font-semibold text-gray-800">{authUser?.username}</p>
-            <p className="text-sm text-gray-500 truncate max-w-[120px]">{authUser?.email ?? "No email"}</p>
+            <p className="text-sm text-gray-500 truncate">{authUser?.email}</p>
           </div>
         </div>
+
         <BiLogOut
           className="text-red-600 text-2xl cursor-pointer hover:scale-110 transition"
           onClick={handleLogOut}
         />
       </div>
 
-      {/* Full Profile Modal */}
+
       {showFullImage && (
         <div
           className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 cursor-pointer"
@@ -221,8 +238,7 @@ const Sidebar = ({ onSelectUser }) => {
         >
           <img
             src={userProfilePic}
-            alt="Full"
-            className="w-72 h-72 rounded-xl shadow-lg border border-white object-cover"
+            className="w-72 h-72 rounded-xl object-cover"
           />
         </div>
       )}
