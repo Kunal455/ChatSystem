@@ -15,10 +15,12 @@ export const SocketContextProvider = ({ children }) => {
   useEffect(() => {
     if (authUser) {
       // ✅ Create socket connection
-      const newSocket = io("http://localhost:5000", {
-        query: { userId: authUser._id },
-        autoConnect: true,
-      });
+      const newSocket = io("https://chat-backend-u9ll.onrender.com", {
+    withCredentials: true,
+    query: { userId: authUser._id },
+    autoConnect: true
+});
+
 
       // ✅ Listen for online users
       newSocket.on("getOnlineUsers", (users) => {

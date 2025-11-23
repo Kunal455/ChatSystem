@@ -105,8 +105,8 @@ const Sidebar = ({ onSelectUser }) => {
     if (!pic)
       return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
     if (pic.startsWith("http")) return pic;
-    return `http://localhost:5000${pic.startsWith("/") ? pic : `/${pic}`}`;
-  };
+    return `https://chat-backend-u9ll.onrender.com${pic.startsWith("/") ? pic : `/${pic}`}`;
+
 
   const userProfilePic = getProfilePicUrl(authUser?.profilepic);
 
