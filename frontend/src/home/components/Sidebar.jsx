@@ -118,7 +118,8 @@ const Sidebar = ({ onSelectUser }) => {
 
     if (pic.startsWith("http")) return pic;
 
-    return `https://chat-backend-u9ll.onrender.com${pic.startsWith("/") ? pic : `/${pic}`}`;
+    return `${import.meta.env.VITE_API_URL}${pic.startsWith("/") ? pic : `/${pic}`}`;
+
   };
 
   const userProfilePic = getProfilePicUrl(authUser?.profilepic);

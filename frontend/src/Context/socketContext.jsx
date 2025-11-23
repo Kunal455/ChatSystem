@@ -2,9 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import io from "socket.io-client";
 import { useAuth } from "../Context/AuthContext";
 
-
 const SocketContext = createContext();
-
 export const useSocketContext = () => useContext(SocketContext);
 
 export const SocketContextProvider = ({ children }) => {
@@ -14,38 +12,38 @@ export const SocketContextProvider = ({ children }) => {
 
   useEffect(() => {
     if (authUser) {
-      // ✅ Create socket connection
-      const newSocket = io("https://chat-backend-u9ll.onrender.com", {
-    withCredentials: true,
-    query: { userId: authUser._id },
-    autoConnect: true
-});
+      
+      const newSocket = io(import.meta.env.VITE_API_URL, {
+        withCredentials: true,
+        query: { userId: authUser._id },
+        transports: ["websocket", "polling"],
+        autoConnect: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      });
 
-
-      // ✅ Listen for online users
       newSocket.on("getOnlineUsers", (users) => {
         setOnlineUser(users);
       });
 
-      // Optional: log connection events (for debugging)
-      newSocket.on("connect", () => console.log("✅ Socket connected"));
-      newSocket.on("disconnect", () => console.log("❌ Socket disconnected"));
+      newSocket.on("connect", () => console.log("🔥 Socket connected"));
+      newSocket.on("disconnect", () => console.log("⚠️ Socket disconnected"));
 
       setSocket(newSocket);
 
-      // ✅ Cleanup when unmounting or authUser changes
       return () => {
         newSocket.disconnect();
         setSocket(null);
       };
+
     } else {
-      // No logged-in user → close existing connection
       if (socket) {
         socket.disconnect();
         setSocket(null);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [authUser]);
 
   return (

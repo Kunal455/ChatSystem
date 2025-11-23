@@ -18,12 +18,14 @@ const MessageContainer = ({ onBackUser }) => {
   const lastMessageRef = useRef();
 
   const getProfilePicUrl = (pic) => {
-    if (!pic)
-      return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
-    if (pic.startsWith("http")) return pic;
-    return `https://chat-backend-u9ll.onrender.com${pic.startsWith("/") ? pic : `/${pic}`}`;
+  if (!pic)
+    return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
 
-  };
+  if (pic.startsWith("http")) return pic;
+
+  return `${import.meta.env.VITE_API_URL}${pic.startsWith("/") ? pic : `/${pic}`}`;
+};
+
 
   // 🔔 Listen for new messages
   useEffect(() => {

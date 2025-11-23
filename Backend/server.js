@@ -13,27 +13,29 @@ const { app, server } = require("./Socket/socket");
 dotenv.config();
 connectDB();
 
-// CORS configuration
-// CORS configuration
 const cors = require("cors");
 
-app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://chat-system-git-main-kunal-kumars-projects-c3b97c3f.vercel.app",
-    
+// 🔥 IMPORTANT — trust reverse proxies (Render load balancer)
+app.set("trust proxy", 1);
 
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
-
+// ⭐ FIXED PERFECT CORS
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      /\.vercel\.app$/            // <-- accepts ANY Vercel URL
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Static uploads route - serves local files when Cloudinary is not configured
+
+// serve uploaded images
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRouter);
@@ -43,4 +45,6 @@ app.use("/api/user", userRouter);
 app.get("/", (req, res) => res.send("API is running"));
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`.bgMagenta));
+server.listen(PORT, () =>
+  console.log(`✅ Server running on port ${PORT}`.bgMagenta)
+);
