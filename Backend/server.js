@@ -17,16 +17,15 @@ connectDB();
 // CORS configuration
 const cors = require("cors");
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://chat-system-oaeyfklx0-kunal-kumars-projects-c3b97c3f.vercel.app"
-];
-
 app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
+  origin: [
+    "http://localhost:3000",
+    "https://chat-system-git-main-kunal-kumars-projects-c3b97c3f.vercel.app",
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
-
 
 
 app.use(cookieParser());
