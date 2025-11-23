@@ -21,7 +21,7 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "https://chat-system-git-main-kunal-kumars-projects-c3b97c3f.vercel.app",
-    "https://chat-system-puce-ten.vercel.app"
+    
 
   ],
   credentials: true,
