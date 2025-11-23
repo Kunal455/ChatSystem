@@ -6,11 +6,15 @@ const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { 
-    origin: ["http://localhost:5173", "https://slrtech-chatapp.onrender.com"], 
-    methods: ["GET", "POST"] 
-  },
+  cors: {
+    origin: [
+      "http://localhost:5173",
+      "https://chat-system-git-main-kunal-kumars-projects-c3b97c3f.vercel.app"
+    ],
+    credentials: true
+  }
 });
+
 
 const userSocketMap = {};
 
