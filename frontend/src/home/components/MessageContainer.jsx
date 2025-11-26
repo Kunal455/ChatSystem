@@ -17,11 +17,38 @@ const MessageContainer = ({ onBackUser }) => {
   const [sendData, setSendData] = useState("");
   const lastMessageRef = useRef();
 
+  // ⛔ Prevent wrong color before authUser loads
+  if (!authUser) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-600">
+        Loading...
+      </div>
+    );
+  }
+
+  // Fix Image URL
   const getProfilePicUrl = (pic) => {
     if (!pic)
       return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
     if (pic.startsWith("http")) return pic;
-    return `https://chat-backend-u9ll.onrender.com${pic.startsWith("/") ? pic : `/${pic}`}`;
+    return `${import.meta.env.VITE_API_URL}${pic}`;
+  };
+
+  // Convert Date to Human Format
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) return "Today";
+    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   // Listen for new messages
@@ -31,6 +58,7 @@ const MessageContainer = ({ onBackUser }) => {
     const handleNewMessage = (newMessage) => {
       const sound = new Audio(notify);
       sound.play();
+
       newMessage.status = "delivered";
 
       setMessage((prev) => [...prev, newMessage]);
@@ -40,37 +68,38 @@ const MessageContainer = ({ onBackUser }) => {
     return () => socket.off("newMessage", handleNewMessage);
   }, [socket]);
 
-  // Auto scroll
+  // Auto-scroll
   useEffect(() => {
     lastMessageRef?.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Fetch messages
+  // Fetch messages from backend
   useEffect(() => {
     if (!selectedConversation?._id) return;
 
-    const getMessages = async () => {
+    const fetchMessages = async () => {
       setLoading(true);
+
       try {
         const res = await axios.get(`/api/message/${selectedConversation._id}`);
 
-        const updated = res.data.map((m) => ({
-          ...m,
-          status: m.status || "delivered",
+        const updated = res.data.map((msg) => ({
+          ...msg,
+          status: msg.status || "delivered",
         }));
 
         setMessage(updated);
-      } catch (error) {
-        console.log(error);
+      } catch (err) {
+        console.log(err);
       } finally {
         setLoading(false);
       }
     };
 
-    getMessages();
+    fetchMessages();
   }, [selectedConversation?._id]);
 
-  // Send message
+  // Send Message
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!sendData.trim()) return;
@@ -81,17 +110,21 @@ const MessageContainer = ({ onBackUser }) => {
         message: sendData,
       });
 
-      const newMsg = { ...res.data, status: "sent" };
+      const newMsg = {
+        ...res.data,
+        status: "sent",
+      };
+
       setMessage((prev) => [...prev, newMsg]);
       setSendData("");
-      setSending(false);
     } catch (error) {
       console.log(error);
+    } finally {
       setSending(false);
     }
   };
 
-  // Message bubble
+  // Message Bubble Component
   const MessageBubble = ({ msg }) => {
     const isSender = msg.senderId === authUser._id;
 
@@ -103,21 +136,20 @@ const MessageContainer = ({ onBackUser }) => {
         <div
           className="px-4 py-2 rounded-2xl max-w-xs break-words shadow-sm"
           style={{
-            backgroundColor: isSender ? "#D4F8D4" : "#FFF4D6", // light green / cream
+            backgroundColor: isSender ? "#D4F8D4" : "#FFF4D6",
             color: "#333",
           }}
         >
           {msg.message}
 
-          {/* TIME + ✔ ICONS */}
           <div className="flex items-center justify-end gap-1 text-[10px] opacity-70 mt-1">
-            {/* Time */}
+            {/* TIME */}
             {new Date(msg.createdAt).toLocaleTimeString("en-IN", {
               hour: "2-digit",
               minute: "2-digit",
             })}
 
-            {/* Ticks only for sender */}
+            {/* TICKS */}
             {isSender && (
               <span>
                 {msg.status === "sent" && "✔"}
@@ -134,7 +166,7 @@ const MessageContainer = ({ onBackUser }) => {
     <div className="flex flex-col w-full h-full p-3 bg-gray-50">
       {!selectedConversation ? (
         <div className="flex flex-col items-center justify-center text-gray-700 h-full">
-          <p className="text-2xl font-semibold">Welcome 👋 {authUser?.username}!</p>
+          <p className="text-2xl font-semibold">Welcome 👋 {authUser.username}!</p>
           <p className="text-sm mb-3">Select a chat to start messaging</p>
           <TiMessages className="text-5xl text-sky-600" />
         </div>
@@ -150,22 +182,39 @@ const MessageContainer = ({ onBackUser }) => {
                 <IoArrowBackSharp size={22} />
               </button>
               <img
-                src={getProfilePicUrl(selectedConversation?.profilepic)}
+                src={getProfilePicUrl(selectedConversation.profilepic)}
                 alt="dp"
                 className="w-9 h-9 rounded-full object-cover border border-white"
               />
-              <span className="font-semibold text-lg">{selectedConversation?.username}</span>
+              <span className="font-semibold text-lg">{selectedConversation.username}</span>
             </div>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+          <div className="flex-1 overflow-y-auto px-2 space-y-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
             {loading ? (
               <div className="text-center py-4 text-gray-600">Loading...</div>
-            ) : messages?.length === 0 ? (
-              <p className="text-center text-gray-600">Start the conversation!</p>
             ) : (
-              messages.map((m) => <MessageBubble key={m._id} msg={m} />)
+              <>
+                {/* Date grouping */}
+                {messages.map((msg, index) => {
+                  const showDate =
+                    index === 0 ||
+                    formatDate(msg.createdAt) !== formatDate(messages[index - 1].createdAt);
+
+                  return (
+                    <React.Fragment key={msg._id}>
+                      {showDate && (
+                        <div className="text-center text-xs text-gray-500 my-2">
+                          {formatDate(msg.createdAt)}
+                        </div>
+                      )}
+
+                      <MessageBubble msg={msg} />
+                    </React.Fragment>
+                  );
+                })}
+              </>
             )}
           </div>
 
@@ -182,11 +231,7 @@ const MessageContainer = ({ onBackUser }) => {
               className="flex-1 bg-transparent outline-none px-3 text-gray-800"
             />
             <button type="submit" className="text-sky-700 hover:text-sky-800 transition-colors">
-              {sending ? (
-                <div className="loading loading-spinner"></div>
-              ) : (
-                <IoSend size={25} />
-              )}
+              {sending ? <div className="loading loading-spinner"></div> : <IoSend size={25} />}
             </button>
           </form>
         </>
