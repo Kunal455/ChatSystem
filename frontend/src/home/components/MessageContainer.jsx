@@ -18,42 +18,34 @@ const MessageContainer = ({ onBackUser }) => {
   const lastMessageRef = useRef();
 
   const getProfilePicUrl = (pic) => {
-  if (!pic)
-    return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+    if (!pic)
+      return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+    if (pic.startsWith("http")) return pic;
+    return `https://chat-backend-u9ll.onrender.com${pic.startsWith("/") ? pic : `/${pic}`}`;
+  };
 
-  if (pic.startsWith("http")) return pic;
-
-  return `${import.meta.env.VITE_API_URL}${pic.startsWith("/") ? pic : `/${pic}`}`;
-};
-
-
-  // 🔔 Listen for new messages
+  // Listen for new messages
   useEffect(() => {
     if (!socket) return;
-    
-    const handleNewMessage = (newMessage) => {
-      // Check if message is between current user and selected user
-      const isMessageForCurrentChat =
-        (newMessage.senderId === selectedConversation?._id && newMessage.receiverId === authUser?._id) ||
-        (newMessage.receiverId === selectedConversation?._id && newMessage.senderId === authUser?._id);
 
-      if (isMessageForCurrentChat) {
-        setMessage((prev) => [...prev, newMessage]);
-        const sound = new Audio(notify);
-        sound.play();
-      }
+    const handleNewMessage = (newMessage) => {
+      const sound = new Audio(notify);
+      sound.play();
+      newMessage.status = "delivered";
+
+      setMessage((prev) => [...prev, newMessage]);
     };
 
     socket.on("newMessage", handleNewMessage);
     return () => socket.off("newMessage", handleNewMessage);
-  }, [socket, selectedConversation?._id, setMessage]);
+  }, [socket]);
 
-  // 🧭 Auto-scroll to last message
+  // Auto scroll
   useEffect(() => {
     lastMessageRef?.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 📩 Fetch chat messages
+  // Fetch messages
   useEffect(() => {
     if (!selectedConversation?._id) return;
 
@@ -61,7 +53,13 @@ const MessageContainer = ({ onBackUser }) => {
       setLoading(true);
       try {
         const res = await axios.get(`/api/message/${selectedConversation._id}`);
-        setMessage(res.data);
+
+        const updated = res.data.map((m) => ({
+          ...m,
+          status: m.status || "delivered",
+        }));
+
+        setMessage(updated);
       } catch (error) {
         console.log(error);
       } finally {
@@ -70,9 +68,9 @@ const MessageContainer = ({ onBackUser }) => {
     };
 
     getMessages();
-  }, [selectedConversation?._id, setMessage]);
+  }, [selectedConversation?._id]);
 
-  // ✉️ Send message
+  // Send message
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!sendData.trim()) return;
@@ -83,15 +81,53 @@ const MessageContainer = ({ onBackUser }) => {
         message: sendData,
       });
 
-      setMessage((prev) => [...prev, res.data]);
+      const newMsg = { ...res.data, status: "sent" };
+      setMessage((prev) => [...prev, newMsg]);
       setSendData("");
-
-      // Message is already emitted by the backend, no need to emit again
+      setSending(false);
     } catch (error) {
       console.log(error);
-    } finally {
       setSending(false);
     }
+  };
+
+  // Message bubble
+  const MessageBubble = ({ msg }) => {
+    const isSender = msg.senderId === authUser._id;
+
+    return (
+      <div
+        ref={lastMessageRef}
+        className={`flex ${isSender ? "justify-end" : "justify-start"}`}
+      >
+        <div
+          className="px-4 py-2 rounded-2xl max-w-xs break-words shadow-sm"
+          style={{
+            backgroundColor: isSender ? "#D4F8D4" : "#FFF4D6", // light green / cream
+            color: "#333",
+          }}
+        >
+          {msg.message}
+
+          {/* TIME + ✔ ICONS */}
+          <div className="flex items-center justify-end gap-1 text-[10px] opacity-70 mt-1">
+            {/* Time */}
+            {new Date(msg.createdAt).toLocaleTimeString("en-IN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+
+            {/* Ticks only for sender */}
+            {isSender && (
+              <span>
+                {msg.status === "sent" && "✔"}
+                {msg.status === "delivered" && "✔✔"}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -129,27 +165,7 @@ const MessageContainer = ({ onBackUser }) => {
             ) : messages?.length === 0 ? (
               <p className="text-center text-gray-600">Start the conversation!</p>
             ) : (
-              messages.map((message) => (
-                <div
-                  key={message?._id}
-                  ref={lastMessageRef}
-                  className={`flex ${message.senderId === authUser._id ? "justify-end" : "justify-start"
-                    }`}
-                >
-                  <div
-                    className={`px-4 py-2 rounded-2xl text-white max-w-xs break-words shadow-sm ${message.senderId === authUser._id ? "bg-sky-600" : "bg-gray-500"
-                      }`}
-                  >
-                    {message?.message}
-                    <div className="text-[10px] text-right opacity-75 mt-1">
-                      {new Date(message?.createdAt).toLocaleTimeString("en-IN", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ))
+              messages.map((m) => <MessageBubble key={m._id} msg={m} />)
             )}
           </div>
 
@@ -164,13 +180,13 @@ const MessageContainer = ({ onBackUser }) => {
               onChange={(e) => setSendData(e.target.value)}
               placeholder="Type a message..."
               className="flex-1 bg-transparent outline-none px-3 text-gray-800"
-              required
             />
-            <button
-              type="submit"
-              className="text-sky-700 hover:text-sky-800 transition-colors"
-            >
-              {sending ? <div className="loading loading-spinner"></div> : <IoSend size={25} />}
+            <button type="submit" className="text-sky-700 hover:text-sky-800 transition-colors">
+              {sending ? (
+                <div className="loading loading-spinner"></div>
+              ) : (
+                <IoSend size={25} />
+              )}
             </button>
           </form>
         </>
