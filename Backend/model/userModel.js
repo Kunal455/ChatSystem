@@ -8,6 +8,7 @@ const userSchema = mongoose.Schema({
   password: { type: String, required: true, minlength: 6 },
   profilepic: {
     type: String, 
+    required: true,
     default: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
   },
 }, { timestamps: true });

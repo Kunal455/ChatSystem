@@ -30,7 +30,7 @@ const MessageContainer = ({ onBackUser }) => {
   // 🔔 Listen for new messages
   useEffect(() => {
     if (!socket) return;
-
+    
     const handleNewMessage = (newMessage) => {
       // Check if message is between current user and selected user
       const isMessageForCurrentChat =
