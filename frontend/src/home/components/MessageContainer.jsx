@@ -115,6 +115,11 @@ const MessageContainer = ({ onBackUser }) => {
         status: "sent",
       };
 
+      // Ensure senderId is normalized (string) so frontend can correctly detect the sender
+      if (newMsg.senderId && typeof newMsg.senderId === "object" && newMsg.senderId._id)
+        newMsg.senderId = newMsg.senderId._id;
+      else if (!newMsg.senderId) newMsg.senderId = authUser._id;
+
       setMessage((prev) => [...prev, newMsg]);
       setSendData("");
     } catch (error) {
@@ -126,7 +131,9 @@ const MessageContainer = ({ onBackUser }) => {
 
   // Message Bubble Component
   const MessageBubble = ({ msg }) => {
-    const isSender = msg.senderId === authUser._id;
+    // Normalize senderId: it may be a populated object or an id string
+    const senderId = msg.senderId && typeof msg.senderId === "object" ? msg.senderId._id : msg.senderId;
+    const isSender = String(senderId) === String(authUser._id);
 
     return (
       <div

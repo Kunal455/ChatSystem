@@ -22,11 +22,14 @@ const userRegister = async (req, res) => {
     let profilepicUrl = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
 
     if (req.file) {
-      if (req.file.path.startsWith("http")) {
+      if (req.file.path && req.file.path.startsWith("http")) {
         profilepicUrl = req.file.path;
-      } else {
+      } else if (req.file && req.file.filename) {
+        // File stored locally in uploads/avatars -> expose as /uploads/avatars/:filename
+        profilepicUrl = `/uploads/avatars/${req.file.filename}`;
+      } else if (req.file && req.file.path) {
         const filename = path.basename(req.file.path);
-        profilepicUrl = `/uploads/${filename}`;
+        profilepicUrl = `/uploads/avatars/${filename}`;
       }
     }
 
@@ -70,11 +73,11 @@ const userLogin = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid credentials" });
 
     res.cookie("jwt", generateToken(user._id), {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-  maxAge: 7 * 24 * 60 * 60 * 1000
-});
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
 
 
     return res.status(200).json({
