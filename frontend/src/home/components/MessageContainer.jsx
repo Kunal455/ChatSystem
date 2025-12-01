@@ -17,14 +17,7 @@ const MessageContainer = ({ onBackUser }) => {
   const [sendData, setSendData] = useState("");
   const lastMessageRef = useRef();
 
-  // ⛔ Prevent wrong color before authUser loads
-  if (!authUser) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-600">
-        Loading...
-      </div>
-    );
-  }
+  // NOTE: we don't early-return before hooks (hooks must run always)
 
   // Fix Image URL
   const getProfilePicUrl = (pic) => {
@@ -59,14 +52,18 @@ const MessageContainer = ({ onBackUser }) => {
       const sound = new Audio(notify);
       sound.play();
 
-      newMessage.status = "delivered";
+      // Normalize senderId shape (populated object vs id string)
+      const normalized = { ...newMessage };
+      const sender = normalized.senderId && typeof normalized.senderId === "object" ? normalized.senderId._id : normalized.senderId;
+      normalized.senderId = String(sender);
+      normalized.status = "delivered";
 
-      setMessage((prev) => [...prev, newMessage]);
+      setMessage((prev) => [...prev, normalized]);
     };
 
     socket.on("newMessage", handleNewMessage);
     return () => socket.off("newMessage", handleNewMessage);
-  }, [socket]);
+  }, [socket, setMessage]);
 
   // Auto-scroll
   useEffect(() => {
@@ -83,10 +80,14 @@ const MessageContainer = ({ onBackUser }) => {
       try {
         const res = await axios.get(`/api/message/${selectedConversation._id}`);
 
-        const updated = res.data.map((msg) => ({
-          ...msg,
-          status: msg.status || "delivered",
-        }));
+        const updated = res.data.map((msg) => {
+          const sender = msg.senderId && typeof msg.senderId === "object" ? msg.senderId._id : msg.senderId;
+          return {
+            ...msg,
+            senderId: String(sender),
+            status: msg.status || "delivered",
+          };
+        });
 
         setMessage(updated);
       } catch (err) {
@@ -97,7 +98,16 @@ const MessageContainer = ({ onBackUser }) => {
     };
 
     fetchMessages();
-  }, [selectedConversation?._id]);
+  }, [selectedConversation?._id, setMessage]);
+
+  // ⛔ Prevent wrong color before authUser loads (run after hooks)
+  if (!authUser) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-600">
+        Loading...
+      </div>
+    );
+  }
 
   // Send Message
   const handleSubmit = async (e) => {
