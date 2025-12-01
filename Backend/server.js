@@ -14,22 +14,72 @@ dotenv.config();
 connectDB();
 
 const cors = require("cors");
+const compression = require('compression');
 
 // 🔥 IMPORTANT — trust reverse proxies (Render load balancer)
 app.set("trust proxy", 1);
 
+// Enable gzip compression for responses (reduces payload size)
+app.use(compression());
+
 // ⭐ FIXED PERFECT CORS
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      /\.vercel\.app$/            // <-- accepts ANY Vercel URL
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+// Configure CORS with a safe origin checker and explicit known origins
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://chat-system-puce-ten.vercel.app",
+  /\.vercel\.app$/,
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // allow requests with no origin (like mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    for (const o of allowedOrigins) {
+      if (o instanceof RegExp) {
+        if (o.test(origin)) return callback(null, true);
+      } else if (o === origin) {
+        return callback(null, true);
+      }
+    }
+    // log rejected origin for debugging
+    console.warn(`CORS rejection: origin=${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+
+// Ensure preflight requests are handled and CORS headers are present
+app.options("*", cors(corsOptions));
+
+// Log preflight OPTIONS requests (helps debugging CORS preflight failures)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    const origin = req.headers.origin || 'no-origin';
+    console.log(`Preflight request: method=OPTIONS url=${req.originalUrl} origin=${origin}`);
+  }
+  next();
+});
+
+// Fallback: reflect origin for any non-standard cases (keeps responses CORS-friendly)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    for (const o of allowedOrigins) {
+      if (o instanceof RegExp ? o.test(origin) : o === origin) {
+        res.header("Access-Control-Allow-Origin", origin);
+        res.header("Access-Control-Allow-Credentials", "true");
+        res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+        res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        break;
+      }
+    }
+  }
+  next();
+});
 
 app.use(cookieParser());
 app.use(express.json());

@@ -44,12 +44,20 @@ const getMessage = async (req, res) => {
 
     const chat = await Conversation.findOne({
       participants: { $all: [senderId, receiverId] },
-    }).populate({
-      path: "messages",
-      populate: { path: "senderId", select: "username profilepic" }
     });
 
-    res.status(200).json(chat ? chat.messages : []);
+    if (!chat) return res.status(200).json([]);
+
+    // Fetch recent messages directly from Message collection with pagination
+    // Use lean() to return plain objects (faster) and limit to the most recent 50 messages
+    const messages = await Message.find({ conversationId: chat._id })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .populate("senderId", "username profilepic")
+      .lean();
+
+    // Return messages in chronological order (oldest first)
+    res.status(200).json(messages.reverse());
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
