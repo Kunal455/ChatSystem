@@ -22,6 +22,12 @@ app.set("trust proxy", 1);
 // Enable gzip compression for responses (reduces payload size)
 app.use(compression());
 
+// Simple request logger to help track incoming requests (method + path)
+app.use((req, res, next) => {
+  console.log(`[REQ] ${new Date().toISOString()} ${req.method} ${req.originalUrl} Origin:${req.headers.origin || 'none'}`);
+  next();
+});
+
 // ⭐ FIXED PERFECT CORS
 // Configure CORS with a safe origin checker and explicit known origins
 const allowedOrigins = [
@@ -93,6 +99,12 @@ app.use("/api/message", messageRouter);
 app.use("/api/user", userRouter);
 
 app.get("/", (req, res) => res.send("API is running"));
+
+// 404 handler for unmatched routes - logs and returns JSON for easier debugging
+app.use((req, res) => {
+  console.warn(`[404] ${new Date().toISOString()} ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ success: false, message: 'Not Found', path: req.originalUrl });
+});
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
