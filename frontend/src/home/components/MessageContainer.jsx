@@ -151,14 +151,14 @@ const MessageContainer = ({ onBackUser }) => {
         className={`flex ${isSender ? "justify-end" : "justify-start"}`}
       >
         <div
-          className={`px-4 py-3 rounded-3xl max-w-xs break-words shadow-md transition-all ${isSender
-              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none"
-              : "bg-gradient-to-r from-gray-700 to-gray-600 text-gray-100 rounded-bl-none"
+          className={`px-6 py-3 rounded-2xl max-w-xs lg:max-w-md break-words shadow-lg transition-all ${isSender
+            ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-br-sm"
+            : "bg-white/10 text-gray-100 rounded-bl-sm border border-white/20"
             }`}
         >
-          {msg.message}
+          <p className="text-sm font-medium">{msg.message}</p>
 
-          <div className="flex items-center justify-end gap-1 text-xs mt-2 opacity-80">
+          <div className="flex items-center justify-end gap-2 text-xs mt-2 opacity-75">
             {/* TIME */}
             {new Date(msg.createdAt).toLocaleTimeString("en-IN", {
               hour: "2-digit",
@@ -167,7 +167,7 @@ const MessageContainer = ({ onBackUser }) => {
 
             {/* TICKS */}
             {isSender && (
-              <span className="ml-1">
+              <span className="ml-1 text-sm">
                 {msg.status === "sent" && "✔"}
                 {msg.status === "delivered" && "✔✔"}
               </span>
@@ -176,41 +176,48 @@ const MessageContainer = ({ onBackUser }) => {
         </div>
       </div>
     );
-  };
-
-  return (
-    <div className="flex flex-col w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl overflow-hidden">
+  }; return (
+    <div className="flex flex-col w-full h-full bg-white/5 backdrop-blur-md">
       {!selectedConversation ? (
         <div className="flex flex-col items-center justify-center text-white h-full">
-          <div className="mb-6"><TiMessages className="text-7xl text-blue-400 drop-shadow-lg" /></div>
-          <p className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">Welcome! 👋</p>
-          <p className="text-xl font-semibold text-gray-200 mb-2">{authUser.username}</p>
-          <p className="text-gray-400 text-center max-w-xs">Select a contact from the sidebar to start messaging</p>
+          <div className="mb-8"><TiMessages className="text-8xl text-cyan-400 drop-shadow-2xl" /></div>
+          <p className="text-5xl font-extrabold mb-3 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Welcome! 👋</p>
+          <p className="text-xl font-semibold text-gray-200 mb-3">{authUser.username}</p>
+          <p className="text-gray-300 text-center max-w-md text-lg">Select a contact from the sidebar to start messaging</p>
         </div>
       ) : (
         <>
           {/* Header */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 shadow-lg border-b border-blue-500/30 rounded-t-2xl">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-6 py-4 shadow-xl border-b border-white/10">
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => onBackUser(true)}
-                className="bg-white text-sky-700 rounded-full p-1 md:hidden"
+                className="bg-white text-cyan-700 rounded-lg p-2 md:hidden hover:bg-gray-100 transition-colors"
               >
-                <IoArrowBackSharp size={22} />
+                <IoArrowBackSharp size={24} />
               </button>
-              <img
-                src={getProfilePicUrl(selectedConversation.profilepic)}
-                alt="dp"
-                className="w-9 h-9 rounded-full object-cover border border-white"
-              />
-              <span className="font-semibold text-lg">{selectedConversation.username}</span>
+              <div className="flex items-center gap-4">
+                <img
+                  src={getProfilePicUrl(selectedConversation.profilepic)}
+                  alt="dp"
+                  className="w-11 h-11 rounded-full object-cover border-2 border-white"
+                />
+                <div>
+                  <span className="font-bold text-lg block">{selectedConversation.username}</span>
+                  <span className="text-xs text-cyan-100">Active now</span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3 bg-gradient-to-b from-slate-800 to-slate-900 scrollbar-thin scrollbar-thumb-blue-500/50 scrollbar-track-slate-800/30">
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 bg-white/5 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-white/5">
             {loading ? (
-              <div className="text-center py-6 text-gray-400">Loading messages...</div>
+              <div className="text-center py-12 text-gray-400 text-lg">Loading messages...</div>
+            ) : messages.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-center text-gray-400">
+                <p>No messages yet. Start the conversation!</p>
+              </div>
             ) : (
               <>
                 {/* Date grouping */}
@@ -222,7 +229,7 @@ const MessageContainer = ({ onBackUser }) => {
                   return (
                     <React.Fragment key={msg._id}>
                       {showDate && (
-                        <div className="text-center text-xs text-gray-500 my-3 font-semibold">
+                        <div className="text-center text-xs text-gray-400 my-4 font-semibold uppercase tracking-wide">
                           {formatDate(msg.createdAt)}
                         </div>
                       )}
@@ -238,17 +245,17 @@ const MessageContainer = ({ onBackUser }) => {
           {/* Input */}
           <form
             onSubmit={handleSubmit}
-            className="flex items-center gap-3 bg-gradient-to-r from-slate-800 to-slate-700 border-t border-blue-500/20 p-3 shadow-lg rounded-b-2xl"
+            className="flex items-center gap-4 bg-white/5 border-t border-white/10 p-5 shadow-xl"
           >
             <input
               type="text"
               value={sendData}
               onChange={(e) => setSendData(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 bg-slate-700/50 text-white placeholder-gray-400 rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="flex-1 bg-white/10 text-white placeholder-gray-400 rounded-xl px-5 py-3 outline-none focus:ring-2 focus:ring-cyan-400 transition-all border border-white/20"
             />
-            <button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white p-3 rounded-full transition-all transform hover:scale-105 shadow-lg">
-              {sending ? <div className="loading loading-spinner"></div> : <IoSend size={20} />}
+            <button type="submit" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white p-3 rounded-lg transition-all transform hover:scale-105 shadow-lg border border-cyan-400/50">
+              {sending ? <div className="loading loading-spinner"></div> : <IoSend size={22} />}
             </button>
           </form>
         </>

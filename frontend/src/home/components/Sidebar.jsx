@@ -127,90 +127,89 @@ const Sidebar = ({ onSelectUser }) => {
 
 
   return (
-    <div className="flex flex-col w-full h-full bg-gradient-to-br from-slate-800 via-slate-900 to-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-blue-500/10">
+    <div className="flex flex-col w-full h-full bg-white/5 backdrop-blur-md overflow-hidden border border-white/10 shadow-2xl">
+
+      {/* Header */}
+      <div className="px-6 py-5 border-b border-white/10 bg-white/5">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Messages</h1>
+        <p className="text-xs text-gray-300 mt-1">Your conversations</p>
+      </div>
 
       {/* Search */}
-      <div className="flex flex-col p-4 gap-3 border-b border-blue-500/20 bg-gradient-to-r from-slate-800 to-slate-700">
-        <form onSubmit={handleSearchSubmit} className="flex items-center bg-slate-700/50 rounded-full shadow-lg px-4 py-2 border border-blue-500/30 focus-within:ring-2 focus-within:ring-blue-400">
+      <div className="flex flex-col p-5 gap-3 border-b border-white/10 bg-white/5">
+        <form onSubmit={handleSearchSubmit} className="flex items-center bg-white/10 rounded-xl shadow-lg px-5 py-3 border border-white/20 focus-within:ring-2 focus-within:ring-cyan-400 transition-all">
+          <FaSearch size={18} className="text-cyan-400 mr-3" />
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search user..."
-            className="flex-1 px-2 bg-transparent outline-none text-white placeholder-gray-400 text-sm"
+            placeholder="Search users..."
+            className="flex-1 bg-transparent outline-none text-white placeholder-gray-400 text-sm font-medium"
           />
-          <button
-            type="submit"
-            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white p-2 rounded-full ml-2 transition-all transform hover:scale-110 shadow-md"
-          >
-            <FaSearch size={16} />
-          </button>
         </form>
       </div>
 
       {/* Chat / Search */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1 scrollbar-thin scrollbar-thumb-blue-500/50 scrollbar-track-slate-700/30">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-white/5">
         {loading ? (
-          <div className="text-center py-8 text-gray-400">Loading...</div>
+          <div className="text-center py-12 text-gray-400 text-sm">Loading conversations...</div>
         ) : searchUser.length > 0 ? (
           <>
             {searchUser.map((user) => (
               <div
                 key={user._id}
                 onClick={() => handleUserClick(user)}
-                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all transform hover:scale-105 ${selectedUserId === user._id
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg"
-                    : "hover:bg-slate-700/50 bg-slate-700/30"
-                  }`}
+                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedUserId === user._id ? "bg-white/20 shadow-lg border border-cyan-400/50" : "hover:bg-white/10 bg-white/5"}`}
               >
                 <img
                   src={getProfilePicUrl(user.profilepic)}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-400"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-cyan-400/60 flex-shrink-0"
                 />
-                <p className="font-semibold text-white">{user.username}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-white truncate">{user.username}</p>
+                  <p className="text-xs text-gray-300">Start conversation</p>
+                </div>
               </div>
             ))}
 
             <button
               onClick={handleSearchBack}
-              className="flex items-center gap-2 bg-slate-700/50 hover:bg-slate-600/70 rounded-full px-3 py-2 mt-4 text-gray-300 hover:text-white transition-all border border-blue-500/30"
+              className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 rounded-xl px-4 py-3 mt-4 text-gray-300 hover:text-white transition-all border border-white/20 w-full"
             >
               <IoArrowBackSharp size={18} /> Back
             </button>
           </>
         ) : chatUser.length === 0 ? (
-          <div className="flex flex-col items-center mt-16 text-gray-400 text-center">
-            <TiMessages className="text-5xl mb-3 text-blue-400/50" />
-            <p className="font-semibold">No chats yet.</p>
-            <p className="text-sm text-gray-500">Search a username to start chatting</p>
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 text-center py-16">
+            <TiMessages className="text-6xl mb-4 text-cyan-400/40" />
+            <p className="font-semibold text-lg">No conversations yet</p>
+            <p className="text-sm text-gray-400 mt-2">Search for someone to start messaging</p>
           </div>
         ) : (
           chatUser.map((user) => (
             <div
               key={user._id}
               onClick={() => handleUserClick(user)}
-              className={`flex items-center justify-between px-3 py-3 rounded-lg cursor-pointer transition-all transform hover:scale-105 ${selectedUserId === user._id
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg"
-                  : "hover:bg-slate-700/50 bg-slate-700/30"
-                }`}
+              className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedUserId === user._id ? "bg-white/20 shadow-lg border border-cyan-400/50" : "hover:bg-white/10 bg-white/5"}`}
             >
-              <div className="flex items-center gap-3 flex-1">
-                <div className="relative">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="relative flex-shrink-0">
                   <img
                     src={getProfilePicUrl(user.profilepic)}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-blue-400"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-cyan-400/60"
                   />
                   {onlineUser.includes(user._id) && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-800"></div>
+                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-gray-900 shadow-lg"></div>
                   )}
                 </div>
-                <p className="font-semibold text-white truncate">{user.username}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-white truncate text-sm">{user.username}</p>
+                  <p className="text-xs text-gray-400">{onlineUser.includes(user._id) ? "Active now" : "Offline"}</p>
+                </div>
               </div>
 
               {newMessageUsers[user._id] && (
-                <div className="rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-xs text-white px-2 py-1 font-bold shadow-md">
-                  +1
-                </div>
+                <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-xs text-white font-bold shadow-lg">•</div>
               )}
             </div>
           ))
@@ -218,26 +217,29 @@ const Sidebar = ({ onSelectUser }) => {
       </div>
 
 
-      {/* bottom bar */}
-      <div className="flex items-center justify-between p-4 border-t border-blue-500/20 bg-gradient-to-r from-slate-900 to-slate-800 shadow-lg">
-        <div className="flex items-center gap-3 flex-1">
+      {/* Profile bar */}
+      <div className="flex items-center justify-between p-5 border-t border-white/10 bg-white/5 shadow-2xl">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           <div
             onClick={() => setShowFullImage(true)}
-            className="w-12 h-12 rounded-full border-2 border-blue-500 cursor-pointer overflow-hidden hover:scale-110 transition-transform shadow-lg"
+            className="w-14 h-14 rounded-full border-2 border-cyan-400/60 cursor-pointer overflow-hidden hover:scale-110 transition-all shadow-lg flex-shrink-0 hover:border-cyan-400"
           >
             <img src={userProfilePic} className="w-full h-full object-cover" />
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="font-semibold text-white text-sm">{authUser?.username}</p>
             <p className="text-xs text-gray-400 truncate">{authUser?.email}</p>
           </div>
         </div>
 
-        <BiLogOut
-          className="text-red-500 hover:text-red-400 text-2xl cursor-pointer hover:scale-110 transition-all"
+        <button
           onClick={handleLogOut}
-        />
+          className="ml-3 p-2 rounded-lg bg-red-600/20 hover:bg-red-600/40 text-red-400 hover:text-red-300 transition-all flex-shrink-0 border border-red-500/30 hover:border-red-500/60"
+          title="Logout"
+        >
+          <BiLogOut size={20} />
+        </button>
       </div>
 
 

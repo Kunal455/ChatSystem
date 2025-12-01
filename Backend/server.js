@@ -58,9 +58,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Ensure preflight requests are handled and CORS headers are present
-app.options("*", cors(corsOptions));
-
 // Log preflight OPTIONS requests (helps debugging CORS preflight failures)
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
