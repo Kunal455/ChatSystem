@@ -151,15 +151,14 @@ const MessageContainer = ({ onBackUser }) => {
         className={`flex ${isSender ? "justify-end" : "justify-start"}`}
       >
         <div
-          className="px-4 py-2 rounded-2xl max-w-xs break-words shadow-sm"
-          style={{
-            backgroundColor: isSender ? "#D4F8D4" : "#FFF4D6",
-            color: "#333",
-          }}
+          className={`px-4 py-3 rounded-3xl max-w-xs break-words shadow-md transition-all ${isSender
+              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none"
+              : "bg-gradient-to-r from-gray-700 to-gray-600 text-gray-100 rounded-bl-none"
+            }`}
         >
           {msg.message}
 
-          <div className="flex items-center justify-end gap-1 text-[10px] opacity-70 mt-1">
+          <div className="flex items-center justify-end gap-1 text-xs mt-2 opacity-80">
             {/* TIME */}
             {new Date(msg.createdAt).toLocaleTimeString("en-IN", {
               hour: "2-digit",
@@ -168,7 +167,7 @@ const MessageContainer = ({ onBackUser }) => {
 
             {/* TICKS */}
             {isSender && (
-              <span>
+              <span className="ml-1">
                 {msg.status === "sent" && "✔"}
                 {msg.status === "delivered" && "✔✔"}
               </span>
@@ -180,17 +179,18 @@ const MessageContainer = ({ onBackUser }) => {
   };
 
   return (
-    <div className="flex flex-col w-full h-full p-3 bg-gray-50">
+    <div className="flex flex-col w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl overflow-hidden">
       {!selectedConversation ? (
-        <div className="flex flex-col items-center justify-center text-gray-700 h-full">
-          <p className="text-2xl font-semibold">Welcome 👋 {authUser.username}!</p>
-          <p className="text-sm mb-3">Select a chat to start messaging</p>
-          <TiMessages className="text-5xl text-sky-600" />
+        <div className="flex flex-col items-center justify-center text-white h-full">
+          <div className="mb-6"><TiMessages className="text-7xl text-blue-400 drop-shadow-lg" /></div>
+          <p className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">Welcome! 👋</p>
+          <p className="text-xl font-semibold text-gray-200 mb-2">{authUser.username}</p>
+          <p className="text-gray-400 text-center max-w-xs">Select a contact from the sidebar to start messaging</p>
         </div>
       ) : (
         <>
           {/* Header */}
-          <div className="flex items-center justify-between bg-sky-600 text-white rounded-lg px-3 py-2 mb-2 shadow">
+          <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 shadow-lg border-b border-blue-500/30 rounded-t-2xl">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onBackUser(true)}
@@ -208,9 +208,9 @@ const MessageContainer = ({ onBackUser }) => {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-2 space-y-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
+          <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3 bg-gradient-to-b from-slate-800 to-slate-900 scrollbar-thin scrollbar-thumb-blue-500/50 scrollbar-track-slate-800/30">
             {loading ? (
-              <div className="text-center py-4 text-gray-600">Loading...</div>
+              <div className="text-center py-6 text-gray-400">Loading messages...</div>
             ) : (
               <>
                 {/* Date grouping */}
@@ -222,7 +222,7 @@ const MessageContainer = ({ onBackUser }) => {
                   return (
                     <React.Fragment key={msg._id}>
                       {showDate && (
-                        <div className="text-center text-xs text-gray-500 my-2">
+                        <div className="text-center text-xs text-gray-500 my-3 font-semibold">
                           {formatDate(msg.createdAt)}
                         </div>
                       )}
@@ -238,17 +238,17 @@ const MessageContainer = ({ onBackUser }) => {
           {/* Input */}
           <form
             onSubmit={handleSubmit}
-            className="flex items-center bg-white rounded-full p-2 mt-2 shadow-sm"
+            className="flex items-center gap-3 bg-gradient-to-r from-slate-800 to-slate-700 border-t border-blue-500/20 p-3 shadow-lg rounded-b-2xl"
           >
             <input
               type="text"
               value={sendData}
               onChange={(e) => setSendData(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 bg-transparent outline-none px-3 text-gray-800"
+              className="flex-1 bg-slate-700/50 text-white placeholder-gray-400 rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
-            <button type="submit" className="text-sky-700 hover:text-sky-800 transition-colors">
-              {sending ? <div className="loading loading-spinner"></div> : <IoSend size={25} />}
+            <button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white p-3 rounded-full transition-all transform hover:scale-105 shadow-lg">
+              {sending ? <div className="loading loading-spinner"></div> : <IoSend size={20} />}
             </button>
           </form>
         </>
