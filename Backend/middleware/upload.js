@@ -1,22 +1,21 @@
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
-// Local-only avatar upload middleware
-const uploadsDir = path.join(__dirname, "../uploads/avatars");
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// Create uploads directory if it doesn't exist
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const timestamp = Date.now();
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-]/g, "_");
-    const ext = path.extname(safeName);
-    cb(null, `avatar-${timestamp}${ext}`);
+// Cloudinary storage for multer
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "chatapp_avatars",
+    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
+    resource_type: "auto",
   },
 });
 

@@ -1,7 +1,7 @@
 const User = require('../model/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const path = require('path');
+
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -21,16 +21,8 @@ const userRegister = async (req, res) => {
 
     let profilepicUrl = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
 
-    if (req.file) {
-      if (req.file.path && req.file.path.startsWith("http")) {
-        profilepicUrl = req.file.path;
-      } else if (req.file && req.file.filename) {
-        // File stored locally in uploads/avatars -> expose as /uploads/avatars/:filename
-        profilepicUrl = `/uploads/avatars/${req.file.filename}`;
-      } else if (req.file && req.file.path) {
-        const filename = path.basename(req.file.path);
-        profilepicUrl = `/uploads/avatars/${filename}`;
-      }
+    if (req.file && req.file.path) {
+      profilepicUrl = req.file.path;
     }
 
     const newUser = new User({
@@ -106,3 +98,4 @@ const userLogout = (req, res) => {
 };
 
 module.exports = { userRegister, userLogin, userLogout };
+
