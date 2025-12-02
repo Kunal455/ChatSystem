@@ -4,14 +4,14 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const colors = require("colors");
 const connectDB = require("./DB/db");
+const { app, server } = require("./Socket/socket");
+
+dotenv.config({ path: path.resolve(__dirname, ".env") });
+connectDB();
 
 const authRouter = require("./Route/authUser");
 const messageRouter = require("./Route/messageRouter");
 const userRouter = require("./Route/userRouter");
-const { app, server } = require("./Socket/socket");
-
-dotenv.config();
-connectDB();
 
 const cors = require("cors");
 const compression = require('compression');
@@ -97,13 +97,28 @@ app.use("/api/user", userRouter);
 
 app.get("/", (req, res) => res.send("API is running"));
 
-// 404 handler for unmatched routes - logs and returns JSON for easier debugging
+// 404 handler for unmatched routes
 app.use((req, res) => {
-  console.warn(`[404] ${new Date().toISOString()} ${req.method} ${req.originalUrl}`);
-  res.status(404).json({ success: false, message: 'Not Found', path: req.originalUrl });
+  console.warn(`[404] ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ success: false, message: 'Not Found' });
 });
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
   console.log(`✅ Server running on port ${PORT}`.bgMagenta)
 );
+
+// === GLOBAL ERROR HANDLERS ===
+process.on('uncaughtException', (err) => {
+  console.error(' UNCAUGHT EXCEPTION:', err.message);
+  console.error(err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error(' UNHANDLED REJECTION:', reason);
+});
+
+app.use((err, req, res, next) => {
+  console.error(' MIDDLEWARE ERROR:', err.message);
+  res.status(500).json({ error: err.message });
+});

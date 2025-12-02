@@ -21,8 +21,12 @@ const userRegister = async (req, res) => {
 
     let profilepicUrl = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
 
-    if (req.file && req.file.path) {
-      profilepicUrl = req.file.path;
+    if (req.file) {
+      console.log("📁 [UPLOAD] File uploaded:", req.file.filename);
+      profilepicUrl = `/uploads/avatars/${req.file.filename}`;
+      console.log("✅ [UPLOAD] Avatar URL:", profilepicUrl);
+    } else {
+      console.log("⚠️ [UPLOAD] No file uploaded, using default avatar");
     }
 
     const newUser = new User({
@@ -36,12 +40,16 @@ const userRegister = async (req, res) => {
 
     await newUser.save();
 
-    // ⛔ DO NOT SET JWT COOKIE ON REGISTER
-    // register does NOT log user in
-
     res.status(201).json({
       success: true,
       message: "Registered successfully. Please login!",
+      user: {
+        _id: newUser._id,
+        fullname: newUser.fullname,
+        username: newUser.username,
+        email: newUser.email,
+        profilepic: newUser.profilepic,
+      }
     });
 
   } catch (error) {
@@ -98,4 +106,3 @@ const userLogout = (req, res) => {
 };
 
 module.exports = { userRegister, userLogin, userLogout };
-

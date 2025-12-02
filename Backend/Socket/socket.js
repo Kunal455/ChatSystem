@@ -13,9 +13,11 @@ const io = new Server(server, {
       /\.vercel\.app$/
     ],
     credentials: true
-  }
+  },
+  allowUpgrades: true,
+  upgradeTimeout: 10000,
+  transports: ['websocket', 'polling']
 });
-
 
 const userSocketMap = {};
 
@@ -24,10 +26,9 @@ io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
   if (userId && userId !== "undefined") {
     userSocketMap[userId] = socket.id;
-    socket.join(userId); // join user's room
+    socket.join(userId);
   }
 
-  // Send online users list
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
@@ -36,7 +37,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Helper to get receiver socket ID
 const getReceiverSocketId = (receiverId) => userSocketMap[receiverId];
 
 module.exports = { app, io, server, getReceiverSocketId };
