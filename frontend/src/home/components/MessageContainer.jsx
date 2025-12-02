@@ -198,7 +198,7 @@ const MessageContainer = ({ onBackUser }) => {
               </button>
               <div className="flex items-center gap-4">
                 <img
-                  src={getProfilePicUrl(selectedConversation.profilepic)}
+                  src={getProfilePicUrl(selectedConversation.profilepic, selectedConversation.username)}
                   alt="dp"
                   className="w-11 h-11 rounded-full object-cover border-2 border-white"
                 />
@@ -265,3 +265,5 @@ const MessageContainer = ({ onBackUser }) => {
 };
 
 export default MessageContainer;
+
+

@@ -113,17 +113,18 @@ const Sidebar = ({ onSelectUser }) => {
   };
 
 
-  const getProfilePicUrl = (pic) => {
-    if (!pic)
-      return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
-
-    if (pic.startsWith("http")) return pic;
-
-    return `${import.meta.env.VITE_API_URL}${pic.startsWith("/") ? pic : `/${pic}`}`;
-
+  const getProfilePicUrl = (pic, username) => {
+    // Use custom picture if uploaded (HTTP URL or local path)
+    if (pic) {
+      if (pic.startsWith("http")) return pic;
+      return `${import.meta.env.VITE_API_URL}${pic.startsWith("/") ? pic : `/${pic}`}`;
+    }
+    // Generate unique cartoon avatar from username using Dicebear
+    const seed = username || "default";
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
   };
 
-  const userProfilePic = getProfilePicUrl(authUser?.profilepic);
+  const userProfilePic = getProfilePicUrl(authUser?.profilepic, authUser?.username);
 
 
   return (
@@ -162,7 +163,7 @@ const Sidebar = ({ onSelectUser }) => {
                 className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedUserId === user._id ? "bg-white/20 shadow-lg border border-cyan-400/50" : "hover:bg-white/10 bg-white/5"}`}
               >
                 <img
-                  src={getProfilePicUrl(user.profilepic)}
+                  src={getProfilePicUrl(user.profilepic, user.username)}
                   className="w-12 h-12 rounded-full object-cover border-2 border-cyan-400/60 flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
@@ -195,7 +196,7 @@ const Sidebar = ({ onSelectUser }) => {
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div className="relative flex-shrink-0">
                   <img
-                    src={getProfilePicUrl(user.profilepic)}
+                    src={getProfilePicUrl(user.profilepic, user.username)}
                     className="w-12 h-12 rounded-full object-cover border-2 border-cyan-400/60"
                   />
                   {onlineUser.includes(user._id) && (
@@ -259,3 +260,4 @@ const Sidebar = ({ onSelectUser }) => {
 };
 
 export default Sidebar;
+
