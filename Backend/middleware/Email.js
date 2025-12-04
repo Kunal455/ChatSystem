@@ -1,4 +1,4 @@
-const { transporter } = require("./email.config.js");
+const { transporter } = require("./Email.config.js");
 
 const Verification_Email_Template = `
 <!DOCTYPE html>
