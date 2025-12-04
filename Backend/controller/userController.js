@@ -1,6 +1,7 @@
 const User = require('../model/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const sendVerificationCode = require('../middleware/Email');
 
 
 const generateToken = (userId) => {
@@ -18,6 +19,7 @@ const userRegister = async (req, res) => {
       return res.status(400).json({ success: false, message: "Username or Email already exists" });
 
     const hashPassword = await bcrypt.hash(password, 10);
+    const verificationCode = Math.floor(10000 + Math.random() * 900000).toString()
 
     let profilepicUrl = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
 
@@ -35,10 +37,13 @@ const userRegister = async (req, res) => {
       email,
       password: hashPassword,
       gender,
-      profilepic: profilepicUrl
+      profilepic: profilepicUrl,
+      verificationCode
     });
 
     await newUser.save();
+    const { sendVerificationCode } = require('../middleware/Email');
+    sendVerificationCode(newUser.email, verificationCode)
 
     res.status(201).json({
       success: true,
@@ -105,4 +110,76 @@ const userLogout = (req, res) => {
   res.status(200).json({ success: true, message: "Logged out" });
 };
 
-module.exports = { userRegister, userLogin, userLogout };
+const verifyEmail = async (req, res) => {
+  try {
+    const { code } = req.body
+    const user = await User.findOne({
+      verificationCode: code
+    })
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or Expired Code" })
+    }
+    user.isVerified = true;
+    user.verificationCode = undefined;
+    await user.save();
+    const { WelcomeEmail } = require('../middleware/Email');
+    await WelcomeEmail(user.email, user.fullname);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "internal server error" })
+    console.log(error)
+  }
+}
+
+const { ResetPasswordEmail } = require('../middleware/Email');
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(400).json({ success: false, message: "Email not found" });
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    user.verificationCode = resetCode;
+    await user.save();
+
+    await ResetPasswordEmail(email, resetCode);
+
+    res.status(200).json({
+      success: true,
+      message: "Reset code sent to email"
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { code, newPassword } = req.body;
+
+    const user = await User.findOne({ verificationCode: code });
+    if (!user)
+      return res.status(400).json({ success: false, message: "Invalid or expired code" });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashed;
+    user.verificationCode = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successful"
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+module.exports = { userRegister, userLogin, userLogout, verifyEmail,forgotPassword, resetPassword };

@@ -1,5 +1,5 @@
 const express = require("express");
-const { userRegister, userLogin, userLogout } = require("../controller/userController");
+const { userRegister, userLogin, userLogout, verifyEmail, forgotPassword, resetPassword } = require("../controller/userController");
 const upload = require("../middleware/upload");
 
 
@@ -10,6 +10,12 @@ router.post('/register',upload.single("profilepic"),userRegister)
 router.post('/login', userLogin)
 
 router.post('/logout', userLogout)
+
+router.post('/verifyemail', verifyEmail)
+
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+
 
 module.exports = router
 

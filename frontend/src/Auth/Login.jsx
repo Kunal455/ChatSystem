@@ -29,6 +29,10 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    if (!userInput.email.endsWith("@gmail.com")) {
+      setLoading(false);
+      return toast.error("Please use a @gmail.com email address");
+    }
     try {
       const res = await axios.post("/api/auth/login", userInput);
       const data = res.data;
@@ -97,6 +101,11 @@ const Login = () => {
               required
               className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
+          </div>
+          <div className="flex justify-end">
+            <Link to="/forgot-password" className="text-sm text-blue-400 hover:underline">
+              Forgot Password?
+            </Link>
           </div>
           <button
             type="submit"

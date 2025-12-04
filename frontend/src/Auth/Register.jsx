@@ -54,6 +54,11 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
 
+    if (!inputData.email.endsWith("@gmail.com")) {
+      setLoading(false);
+      return toast.error("Please use a @gmail.com email address");
+    }
+
     if (inputData.password !== inputData.confpassword) {
       setLoading(false);
       return toast.error("Passwords do not match!");
@@ -78,7 +83,7 @@ const Register = () => {
       // ⛔ NO setAuthUser
       // ⛔ NO localStorage
 
-      navigate("/login");
+      navigate("/verify");
 
     } catch (error) {
       setLoading(false);
