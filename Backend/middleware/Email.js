@@ -55,7 +55,7 @@ const Welcome_Email_Template = `
 const sendVerificationCode = async (email, VerificationCode) => {
     try {
         const response = await transporter.sendMail({
-            from: '"Talkio" <kk6547015@gmail.com>',
+            from: `"Talkio" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: "Verify your Email",
             text: "Verify your Email",
@@ -70,7 +70,7 @@ const sendVerificationCode = async (email, VerificationCode) => {
 const WelcomeEmail = async (email, name) => {
     try {
         const response = await transporter.sendMail({
-            from: '"Talkio" <kk6547015@gmail.com>',
+            from: `"Talkio" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: "Welcome to Talkio",
             text: "Welcome to Talkio",
@@ -86,7 +86,7 @@ const WelcomeEmail = async (email, name) => {
 const ResetPasswordEmail = async (email, code) => {
     try {
         const response = await transporter.sendMail({
-            from: '"Talkio" <kk6547015@gmail.com>',
+            from: `"Talkio" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: "Reset Your Password",
             html: `
