@@ -134,9 +134,7 @@ const verifyEmail = async (req, res) => {
     user.isVerified = true;
     user.verificationCode = undefined;
     await user.save();
-    user.isVerified = true;
-    user.verificationCode = undefined;
-    await user.save();
+
 
     try {
       await WelcomeEmail(user.email, user.fullname);
