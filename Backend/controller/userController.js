@@ -1,7 +1,7 @@
 const User = require('../model/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const sendVerificationCode = require('../middleware/Email');
+const { sendVerificationCode, WelcomeEmail, ResetPasswordEmail } = require('../middleware/Email');
 
 
 const generateToken = (userId) => {
@@ -134,15 +134,20 @@ const verifyEmail = async (req, res) => {
     user.isVerified = true;
     user.verificationCode = undefined;
     await user.save();
-    const { WelcomeEmail } = require('../middleware/Email');
-    await WelcomeEmail(user.email, user.fullname);
+    user.isVerified = true;
+    user.verificationCode = undefined;
+    await user.save();
+
+    try {
+      await WelcomeEmail(user.email, user.fullname);
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+    }
   } catch (error) {
-    return res.status(500).json({ success: false, message: "internal server error" })
     console.log(error)
+    return res.status(500).json({ success: false, message: "internal server error" })
   }
 }
-
-const { ResetPasswordEmail } = require('../middleware/Email');
 
 const forgotPassword = async (req, res) => {
   try {
@@ -156,7 +161,12 @@ const forgotPassword = async (req, res) => {
     user.verificationCode = resetCode;
     await user.save();
 
-    await ResetPasswordEmail(email, resetCode);
+    try {
+      await ResetPasswordEmail(email, resetCode);
+    } catch (emailError) {
+      console.error("Failed to send reset password email:", emailError);
+      return res.status(500).json({ success: false, message: "Failed to send reset email" });
+    }
 
     res.status(200).json({
       success: true,

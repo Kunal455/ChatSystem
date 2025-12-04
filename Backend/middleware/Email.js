@@ -79,8 +79,10 @@ const WelcomeEmail = async (email, name) => {
             html: Welcome_Email_Template.replace("{name}", name),
         })
         console.log("email send successfully", response)
+        return response;
     } catch (error) {
-        console.log(error)
+        console.error("Error sending welcome email:", error);
+        throw error;
     }
 }
 
@@ -99,8 +101,10 @@ const ResetPasswordEmail = async (email, code) => {
       `,
         });
         console.log("Reset Email Sent:", response);
+        return response;
     } catch (error) {
-        console.log(error);
+        console.error("Error sending reset password email:", error);
+        throw error;
     }
 };
 
