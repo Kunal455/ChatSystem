@@ -20,8 +20,8 @@ const getUser = async (req, res) => {
   }
 };
 
-// Current chatters
-const getcurrentchatters = async (req, res) => {
+// Current talkio
+const getcurrenttalkio = async (req, res) => {
   try {
     const currentId = req.user._id;
     const conversations = await Conversation.find({ participants: currentId }).sort({ updatedAt: -1 });
@@ -58,4 +58,4 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-module.exports = { getUser, getcurrentchatters, getUserById, getCurrentUser };
+module.exports = { getUser, getcurrenttalkio, getUserById, getCurrentUser };

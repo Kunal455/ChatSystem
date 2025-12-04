@@ -96,7 +96,7 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-700 px-4">
       <div className="w-full max-w-lg bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
         <h1 className="text-4xl font-extrabold text-center text-white">
-          Create your <span className="text-blue-400">Chatters</span> account
+          Create your <span className="text-blue-400">Talkio</span> account
         </h1>
         <p className="text-center text-gray-300 mt-2">
           Join and start connecting today

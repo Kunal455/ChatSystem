@@ -54,7 +54,7 @@ const Sidebar = ({ onSelectUser }) => {
     const fetchChatUsers = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("/api/user/currentchatters");
+        const res = await axios.get("/api/user/currenttalkio");
         setChatUser(Array.isArray(res.data) ? res.data : res.data?.users ?? []);
       } catch {
         toast.error("Failed to load chat users");

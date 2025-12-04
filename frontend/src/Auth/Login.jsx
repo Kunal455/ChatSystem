@@ -63,7 +63,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-700 px-4">
       <div className="w-full max-w-md bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
         <h1 className="text-4xl font-extrabold text-center text-white">
-          Welcome to <span className="text-blue-400">Chatters</span>
+          Welcome to <span className="text-blue-400">Talkio</span>
         </h1>
         <p className="text-center text-gray-300 mt-2">
           Sign in to continue
