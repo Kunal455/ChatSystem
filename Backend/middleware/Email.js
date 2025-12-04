@@ -62,8 +62,10 @@ const sendVerificationCode = async (email, VerificationCode) => {
             html: Verification_Email_Template.replace("{verificationCode}", VerificationCode),
         })
         console.log("email send successfully", response)
+        return response;
     } catch (error) {
-        console.log(error)
+        console.error("Error sending verification email:", error);
+        throw error;
     }
 }
 

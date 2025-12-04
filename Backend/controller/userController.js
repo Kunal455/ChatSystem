@@ -42,8 +42,17 @@ const userRegister = async (req, res) => {
     });
 
     await newUser.save();
-    const { sendVerificationCode } = require('../middleware/Email');
-    sendVerificationCode(newUser.email, verificationCode)
+    await newUser.save();
+
+    // Send verification email
+    try {
+      await sendVerificationCode(newUser.email, verificationCode);
+    } catch (emailError) {
+      console.error("Failed to send verification email:", emailError);
+      // Optional: Delete user if email fails, or just warn
+      // await User.findByIdAndDelete(newUser._id);
+      // return res.status(500).json({ success: false, message: "Failed to send verification email. Please try again." });
+    }
 
     res.status(201).json({
       success: true,
