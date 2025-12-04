@@ -73,6 +73,9 @@ const userLogin = async (req, res) => {
     if (!user)
       return res.status(400).json({ success: false, message: "Email not registered" });
 
+    if (!user.isVerified)
+      return res.status(400).json({ success: false, message: "Please verify your email first" });
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(400).json({ success: false, message: "Invalid credentials" });
@@ -182,4 +185,4 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { userRegister, userLogin, userLogout, verifyEmail,forgotPassword, resetPassword };
+module.exports = { userRegister, userLogin, userLogout, verifyEmail, forgotPassword, resetPassword };
