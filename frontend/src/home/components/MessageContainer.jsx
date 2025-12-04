@@ -20,11 +20,15 @@ const MessageContainer = ({ onBackUser }) => {
   // NOTE: we don't early-return before hooks (hooks must run always)
 
   // Fix Image URL
-  const getProfilePicUrl = (pic) => {
-    if (!pic)
-      return "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
-    if (pic.startsWith("http")) return pic;
-    return `${import.meta.env.VITE_API_URL}${pic}`;
+  const getProfilePicUrl = (pic, username) => {
+    // Use custom picture if uploaded (HTTP URL or local path)
+    if (pic) {
+      if (pic.startsWith("http")) return pic;
+      return `${import.meta.env.VITE_API_URL}${pic.startsWith("/") ? pic : `/${pic}`}`;
+    }
+    // Generate unique cartoon avatar from username using Dicebear
+    const seed = username || "default";
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
   };
 
   // Convert Date to Human Format

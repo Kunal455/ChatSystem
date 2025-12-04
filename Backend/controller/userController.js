@@ -22,8 +22,8 @@ const userRegister = async (req, res) => {
     let profilepicUrl = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
 
     if (req.file) {
-      console.log("📁 [UPLOAD] File uploaded:", req.file.filename);
-      profilepicUrl = `/uploads/avatars/${req.file.filename}`;
+      console.log("📁 [UPLOAD] File uploaded to Cloudinary:", req.file.path);
+      profilepicUrl = req.file.path;
       console.log("✅ [UPLOAD] Avatar URL:", profilepicUrl);
     } else {
       console.log("⚠️ [UPLOAD] No file uploaded, using default avatar");
