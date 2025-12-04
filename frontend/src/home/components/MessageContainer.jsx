@@ -156,7 +156,7 @@ const MessageContainer = ({ onBackUser }) => {
       >
         <div
           className={`px-6 py-3 rounded-2xl max-w-xs lg:max-w-md break-words shadow-lg transition-all ${isSender
-            ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-br-sm"
+            ? "bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-br-sm"
             : "bg-white/10 text-gray-100 rounded-bl-sm border border-white/20"
             }`}
         >
@@ -184,19 +184,19 @@ const MessageContainer = ({ onBackUser }) => {
     <div className="flex flex-col w-full h-full bg-white/5 backdrop-blur-md">
       {!selectedConversation ? (
         <div className="flex flex-col items-center justify-center text-white h-full">
-          <div className="mb-8"><TiMessages className="text-8xl text-cyan-400 drop-shadow-2xl" /></div>
-          <p className="text-5xl font-extrabold mb-3 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Welcome! 👋</p>
+          <div className="mb-8"><TiMessages className="text-8xl text-blue-400 drop-shadow-2xl" /></div>
+          <p className="text-5xl font-extrabold mb-3 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Welcome! 👋</p>
           <p className="text-xl font-semibold text-gray-200 mb-3">{authUser.username}</p>
           <p className="text-gray-300 text-center max-w-md text-lg">Select a contact from the sidebar to start messaging</p>
         </div>
       ) : (
         <>
           {/* Header */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-6 py-4 shadow-xl border-b border-white/10">
+          <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-4 shadow-xl border-b border-white/10">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => onBackUser(true)}
-                className="bg-white text-cyan-700 rounded-lg p-2 md:hidden hover:bg-gray-100 transition-colors"
+                className="bg-white text-blue-700 rounded-lg p-2 md:hidden hover:bg-gray-100 transition-colors"
               >
                 <IoArrowBackSharp size={24} />
               </button>
@@ -208,7 +208,7 @@ const MessageContainer = ({ onBackUser }) => {
                 />
                 <div>
                   <span className="font-bold text-lg block">{selectedConversation.username}</span>
-                  <span className="text-xs text-cyan-100">Active now</span>
+                  <span className="text-xs text-blue-100">Active now</span>
                 </div>
               </div>
             </div>
@@ -256,9 +256,9 @@ const MessageContainer = ({ onBackUser }) => {
               value={sendData}
               onChange={(e) => setSendData(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 bg-white/10 text-white placeholder-gray-400 rounded-xl px-5 py-3 outline-none focus:ring-2 focus:ring-cyan-400 transition-all border border-white/20"
+              className="flex-1 bg-white/10 text-white placeholder-gray-400 rounded-xl px-5 py-3 outline-none focus:ring-2 focus:ring-blue-400 transition-all border border-white/20"
             />
-            <button type="submit" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white p-3 rounded-lg transition-all transform hover:scale-105 shadow-lg border border-cyan-400/50">
+            <button type="submit" className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white p-3 rounded-lg transition-all transform hover:scale-105 shadow-lg border border-blue-400/50">
               {sending ? <div className="loading loading-spinner"></div> : <IoSend size={22} />}
             </button>
           </form>

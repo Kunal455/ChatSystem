@@ -8,7 +8,7 @@ import { useAuth } from "../Context/AuthContext";
 const Login = () => {
   const [userInput, setUserInput] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const { authUser, setAuthUser, loading: authLoading } = useAuth();
 
@@ -44,7 +44,7 @@ const Login = () => {
       // ✅ FIX: Store and set 'data.user' instead of the whole 'data' object
       localStorage.setItem("chatapp", JSON.stringify(data.user));
       setAuthUser(data.user)
-      
+
       setLoading(false);
       navigate("/");
     } catch (error) {
@@ -59,7 +59,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-700 px-4">
       <div className="w-full max-w-md bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
         <h1 className="text-4xl font-extrabold text-center text-white">
-          Welcome to <span className="text-green-400">Chatters</span>
+          Welcome to <span className="text-blue-400">Chatters</span>
         </h1>
         <p className="text-center text-gray-300 mt-2">
           Sign in to continue
@@ -79,7 +79,7 @@ const Login = () => {
               onChange={handleInput}
               placeholder="Enter your email"
               required
-              className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
           <div>
@@ -95,12 +95,12 @@ const Login = () => {
               onChange={handleInput}
               placeholder="Enter your password"
               required
-              className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="w-full px-4 py-3 rounded-lg bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-transform transform hover:scale-105"
+            className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg transition-transform transform hover:scale-105"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
@@ -110,7 +110,7 @@ const Login = () => {
           Don’t have an account?{" "}
           <Link
             to="/register"
-            className="text-green-400 font-semibold hover:underline"
+            className="text-blue-400 font-semibold hover:underline"
           >
             Register Now
           </Link>

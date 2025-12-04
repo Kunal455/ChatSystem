@@ -91,7 +91,7 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-700 px-4">
       <div className="w-full max-w-lg bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
         <h1 className="text-4xl font-extrabold text-center text-white">
-          Create your <span className="text-green-400">Chatters</span> account
+          Create your <span className="text-blue-400">Chatters</span> account
         </h1>
         <p className="text-center text-gray-300 mt-2">
           Join and start connecting today
@@ -102,14 +102,14 @@ const Register = () => {
           <div className="flex flex-col items-center mb-4">
             <label
               htmlFor="profilepic"
-              className="cursor-pointer relative w-24 h-24 rounded-full border-2 border-green-400 flex items-center justify-center overflow-hidden bg-white/10"
+              className="cursor-pointer relative w-24 h-24 rounded-full border-2 border-blue-400 flex items-center justify-center overflow-hidden bg-white/10"
             >
               {preview ? (
-                <img src={preview} className="w-full h-full object-cover"/>
+                <img src={preview} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-gray-300 text-sm">Upload Photo</span>
               )}
-              <input id="profilepic" type="file" accept="image/*" className="hidden" onChange={handleImageChange}/>
+              <input id="profilepic" type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             </label>
             <p className="text-gray-400 text-xs mt-2">Max size: 5MB (JPG/PNG)</p>
           </div>
@@ -124,7 +124,7 @@ const Register = () => {
                 type={field.includes("password") ? "password" : "text"}
                 onChange={handleInput}
                 required
-                className="w-full px-4 py-3 bg-white/20 text-white rounded-lg outline-none focus:ring-2 focus:ring-green-400"
+                className="w-full px-4 py-3 bg-white/20 text-white rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
           ))}
@@ -132,20 +132,20 @@ const Register = () => {
           <div className="flex justify-center gap-6 mt-4">
             {["male", "female"].map((g) => (
               <label key={g} className="flex items-center gap-2 text-gray-200 font-semibold cursor-pointer">
-                <input type="radio" name="gender" checked={inputData.gender === g} onChange={() => selectGender(g)}/>
+                <input type="radio" name="gender" checked={inputData.gender === g} onChange={() => selectGender(g)} />
                 {g}
               </label>
             ))}
           </div>
 
-          <button disabled={loading} className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold">
+          <button disabled={loading} className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-bold">
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
         <p className="text-center text-gray-300 text-sm mt-4">
-          Already have an account?  
-          <Link to="/login" className="text-green-400 font-semibold"> Login Now </Link>
+          Already have an account?
+          <Link to="/login" className="text-blue-400 font-semibold"> Login Now </Link>
         </p>
       </div>
     </div>

@@ -132,14 +132,14 @@ const Sidebar = ({ onSelectUser }) => {
 
       {/* Header */}
       <div className="px-6 py-5 border-b border-white/10 bg-white/5">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Messages</h1>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Messages</h1>
         <p className="text-xs text-gray-300 mt-1">Your conversations</p>
       </div>
 
       {/* Search */}
       <div className="flex flex-col p-5 gap-3 border-b border-white/10 bg-white/5">
-        <form onSubmit={handleSearchSubmit} className="flex items-center bg-white/10 rounded-xl shadow-lg px-5 py-3 border border-white/20 focus-within:ring-2 focus-within:ring-cyan-400 transition-all">
-          <FaSearch size={18} className="text-cyan-400 mr-3" />
+        <form onSubmit={handleSearchSubmit} className="flex items-center bg-white/10 rounded-xl shadow-lg px-5 py-3 border border-white/20 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
+          <FaSearch size={18} className="text-blue-400 mr-3" />
           <input
             type="text"
             value={searchInput}
@@ -160,11 +160,11 @@ const Sidebar = ({ onSelectUser }) => {
               <div
                 key={user._id}
                 onClick={() => handleUserClick(user)}
-                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedUserId === user._id ? "bg-white/20 shadow-lg border border-cyan-400/50" : "hover:bg-white/10 bg-white/5"}`}
+                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedUserId === user._id ? "bg-white/20 shadow-lg border border-blue-400/50" : "hover:bg-white/10 bg-white/5"}`}
               >
                 <img
                   src={getProfilePicUrl(user.profilepic, user.username)}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-cyan-400/60 flex-shrink-0"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-blue-400/60 flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-white truncate">{user.username}</p>
@@ -182,7 +182,7 @@ const Sidebar = ({ onSelectUser }) => {
           </>
         ) : chatUser.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 text-center py-16">
-            <TiMessages className="text-6xl mb-4 text-cyan-400/40" />
+            <TiMessages className="text-6xl mb-4 text-blue-400/40" />
             <p className="font-semibold text-lg">No conversations yet</p>
             <p className="text-sm text-gray-400 mt-2">Search for someone to start messaging</p>
           </div>
@@ -191,13 +191,13 @@ const Sidebar = ({ onSelectUser }) => {
             <div
               key={user._id}
               onClick={() => handleUserClick(user)}
-              className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedUserId === user._id ? "bg-white/20 shadow-lg border border-cyan-400/50" : "hover:bg-white/10 bg-white/5"}`}
+              className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-200 ${selectedUserId === user._id ? "bg-white/20 shadow-lg border border-blue-400/50" : "hover:bg-white/10 bg-white/5"}`}
             >
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div className="relative flex-shrink-0">
                   <img
                     src={getProfilePicUrl(user.profilepic, user.username)}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-cyan-400/60"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-blue-400/60"
                   />
                   {onlineUser.includes(user._id) && (
                     <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-gray-900 shadow-lg"></div>
@@ -210,7 +210,7 @@ const Sidebar = ({ onSelectUser }) => {
               </div>
 
               {newMessageUsers[user._id] && (
-                <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-xs text-white font-bold shadow-lg">•</div>
+                <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-cyan-600 text-xs text-white font-bold shadow-lg">•</div>
               )}
             </div>
           ))
@@ -223,7 +223,7 @@ const Sidebar = ({ onSelectUser }) => {
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div
             onClick={() => setShowFullImage(true)}
-            className="w-14 h-14 rounded-full border-2 border-cyan-400/60 cursor-pointer overflow-hidden hover:scale-110 transition-all shadow-lg flex-shrink-0 hover:border-cyan-400"
+            className="w-14 h-14 rounded-full border-2 border-blue-400/60 cursor-pointer overflow-hidden hover:scale-110 transition-all shadow-lg flex-shrink-0 hover:border-blue-400"
           >
             <img src={userProfilePic} className="w-full h-full object-cover" />
           </div>
