@@ -87,7 +87,11 @@ const Register = () => {
 
     } catch (error) {
       setLoading(false);
-      console.log(error);
+      console.error("Registration Error:", error);
+      if (error.response) {
+        console.error("Error Data:", error.response.data);
+        console.error("Error Status:", error.response.status);
+      }
       toast.error(error?.response?.data?.message || "Something went wrong!");
     }
   };
