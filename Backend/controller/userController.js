@@ -3,10 +3,12 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { sendVerificationCode, WelcomeEmail, ResetPasswordEmail } = require('../middleware/Email');
 
-
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
+
+const generate6DigitCode = () => 
+  Math.floor(100000 + Math.random() * 900000).toString();
 
 // ================== REGISTER ==================
 const userRegister = async (req, res) => {
@@ -14,22 +16,15 @@ const userRegister = async (req, res) => {
     const { fullname, username, email, gender, password } = req.body;
 
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-
     if (existingUser)
       return res.status(400).json({ success: false, message: "Username or Email already exists" });
 
     const hashPassword = await bcrypt.hash(password, 10);
-    const verificationCode = Math.floor(10000 + Math.random() * 900000).toString()
+    const verificationCode = generate6DigitCode();
 
     let profilepicUrl = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
 
-    if (req.file) {
-      console.log("📁 [UPLOAD] File uploaded to Cloudinary:", req.file.path);
-      profilepicUrl = req.file.path;
-      console.log("✅ [UPLOAD] Avatar URL:", profilepicUrl);
-    } else {
-      console.log("⚠️ [UPLOAD] No file uploaded, using default avatar");
-    }
+    if (req.file) profilepicUrl = req.file.path;
 
     const newUser = new User({
       fullname,
@@ -38,25 +33,18 @@ const userRegister = async (req, res) => {
       password: hashPassword,
       gender,
       profilepic: profilepicUrl,
-      verificationCode
+      verificationCode,
+      otpExpires: Date.now() + 10 * 60 * 1000 // OTP valid for 10 minutes
     });
 
     await newUser.save();
-    await newUser.save();
 
-    // Send verification email
-    try {
-      await sendVerificationCode(newUser.email, verificationCode);
-    } catch (emailError) {
-      console.error("Failed to send verification email:", emailError);
-      // Optional: Delete user if email fails, or just warn
-      // await User.findByIdAndDelete(newUser._id);
-      // return res.status(500).json({ success: false, message: "Failed to send verification email. Please try again." });
-    }
+    // Send Email Once
+    await sendVerificationCode(newUser.email, verificationCode);
 
     res.status(201).json({
       success: true,
-      message: "Registered successfully. Please login!",
+      message: "Registered successfully. Please verify your email.",
       user: {
         _id: newUser._id,
         fullname: newUser.fullname,
@@ -71,7 +59,6 @@ const userRegister = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 // ================== LOGIN ==================
 const userLogin = async (req, res) => {
@@ -96,7 +83,6 @@ const userLogin = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -115,39 +101,40 @@ const userLogin = async (req, res) => {
   }
 };
 
-
 // ================== LOGOUT ==================
 const userLogout = (req, res) => {
   res.cookie("jwt", "", { maxAge: 0 });
   res.status(200).json({ success: true, message: "Logged out" });
 };
 
+// ================== VERIFY EMAIL ==================
 const verifyEmail = async (req, res) => {
   try {
-    const { code } = req.body
-    const user = await User.findOne({
-      verificationCode: code
-    })
-    if (!user) {
-      return res.status(400).json({ success: false, message: "Invalid or Expired Code" })
-    }
+    const { code } = req.body;
+    const user = await User.findOne({ verificationCode: code });
+
+    if (!user)
+      return res.status(400).json({ success: false, message: "Invalid or expired code" });
+
+    if (user.otpExpires < Date.now())
+      return res.status(400).json({ success: false, message: "Code expired, request a new one" });
+
     user.isVerified = true;
     user.verificationCode = undefined;
+    user.otpExpires = undefined;
     await user.save();
 
-
-    // Send welcome email asynchronously (fire and forget)
-    WelcomeEmail(user.email, user.fullname).catch(emailError => {
-      console.error("Failed to send welcome email:", emailError);
-    });
+    WelcomeEmail(user.email, user.fullname).catch(() => {});
 
     return res.status(200).json({ success: true, message: "Email verified successfully" });
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({ success: false, message: "internal server error" })
-  }
-}
 
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// ================== FORGOT PASSWORD ==================
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -156,16 +143,13 @@ const forgotPassword = async (req, res) => {
     if (!user)
       return res.status(400).json({ success: false, message: "Email not found" });
 
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetCode = generate6DigitCode();
+
     user.verificationCode = resetCode;
+    user.otpExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    try {
-      await ResetPasswordEmail(email, resetCode);
-    } catch (emailError) {
-      console.error("Failed to send reset password email:", emailError);
-      return res.status(500).json({ success: false, message: "Failed to send reset email" });
-    }
+    await ResetPasswordEmail(email, resetCode);
 
     res.status(200).json({
       success: true,
@@ -178,18 +162,25 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+// ================== RESET PASSWORD ==================
 const resetPassword = async (req, res) => {
   try {
     const { code, newPassword } = req.body;
 
     const user = await User.findOne({ verificationCode: code });
+
     if (!user)
       return res.status(400).json({ success: false, message: "Invalid or expired code" });
+
+    if (user.otpExpires < Date.now())
+      return res.status(400).json({ success: false, message: "Code expired, request again" });
 
     const hashed = await bcrypt.hash(newPassword, 10);
 
     user.password = hashed;
     user.verificationCode = undefined;
+    user.otpExpires = undefined;
+
     await user.save();
 
     res.status(200).json({
@@ -203,4 +194,44 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { userRegister, userLogin, userLogout, verifyEmail, forgotPassword, resetPassword };
+// ================== RESEND OTP ==================
+const resendVerificationCode = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user)
+      return res.status(400).json({ success: false, message: "User not found" });
+
+    if (user.isVerified)
+      return res.status(400).json({ success: false, message: "User already verified" });
+
+    const newCode = generate6DigitCode();
+    user.verificationCode = newCode;
+    user.otpExpires = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    await sendVerificationCode(email, newCode);
+
+    return res.status(200).json({
+      success: true,
+      message: "New verification code sent"
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+module.exports = { 
+  userRegister,
+  userLogin,
+  userLogout,
+  verifyEmail,
+  forgotPassword,
+  resetPassword,
+  resendVerificationCode
+};
