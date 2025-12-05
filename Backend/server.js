@@ -9,6 +9,27 @@ const { app, server } = require("./Socket/socket");
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 connectDB();
 
+// Validate critical env vars
+const requiredEnv = [
+  "MONGO_URI",
+  "JWT_SECRET",
+  "EMAIL_USER",
+  "EMAIL_PASS",
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET"
+];
+
+const missingEnv = requiredEnv.filter(key => !process.env[key]);
+if (missingEnv.length > 0) {
+  console.error("❌ CRITICAL ERROR: Missing Environment Variables:".red.bold);
+  console.error(missingEnv.join(", ").red);
+  console.error("Please set these in your deployment settings (Render/Vercel).".yellow);
+  // We don't exit process here to allow debugging, but it will likely fail later
+} else {
+  console.log("✅ All critical environment variables are present.".green);
+}
+
 const authRouter = require("./Route/authUser");
 const messageRouter = require("./Route/messageRouter");
 const userRouter = require("./Route/userRouter");
@@ -120,5 +141,6 @@ process.on('unhandledRejection', (reason, promise) => {
 
 app.use((err, req, res, next) => {
   console.error(' MIDDLEWARE ERROR:', err.message);
-  res.status(500).json({ error: err.message });
+  console.error(' MIDDLEWARE ERROR:', err.message);
+  res.status(500).json({ success: false, message: err.message || "Internal Server Error" });
 });
