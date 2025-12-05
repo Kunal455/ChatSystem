@@ -10,7 +10,7 @@ const testRegister = async () => {
         form.append('fullname', 'Test User');
         form.append('username', 'testuser_' + Date.now());
         form.append('email', 'testuser_' + Date.now() + '@test.com');
-        form.append('gender', 'Male');
+        form.append('gender', 'male');
         form.append('password', 'Test@123');
 
         // Add a test image (create a small test image or use existing one)

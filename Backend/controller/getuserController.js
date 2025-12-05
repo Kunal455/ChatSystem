@@ -24,23 +24,17 @@ const getUser = async (req, res) => {
 const getcurrenttalkio = async (req, res) => {
   try {
     const currentId = req.user._id;
-    const conversations = await Conversation.find({ participants: currentId }).sort({ updatedAt: -1 });
+    const conversations = await Conversation.find({ participants: currentId })
+      .sort({ updatedAt: -1 })
+      .populate("participants", "-password -email");
 
-    const participantIds = conversations.flatMap(c => c.participants.filter(id => id.toString() !== currentId.toString()));
-    const users = await User.find({ _id: { $in: participantIds } }).select("-password -email");
+    const users = conversations.map((conversation) => {
+      return conversation.participants.find(
+        (participant) => participant._id.toString() !== currentId.toString()
+      );
+    });
 
     res.status(200).json(users);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Get user by ID
-const getUserById = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).select("-password");
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    res.status(200).json({ success: true, user });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -58,4 +52,4 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-module.exports = { getUser, getcurrenttalkio, getUserById, getCurrentUser };
+module.exports = { getUser, getcurrenttalkio, getCurrentUser };

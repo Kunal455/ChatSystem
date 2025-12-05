@@ -7,7 +7,7 @@ const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-const generate6DigitCode = () => 
+const generate6DigitCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
 // ================== REGISTER ==================
@@ -55,8 +55,8 @@ const userRegister = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Register Error:", error);
+    res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
 
@@ -124,13 +124,13 @@ const verifyEmail = async (req, res) => {
     user.otpExpires = undefined;
     await user.save();
 
-    WelcomeEmail(user.email, user.fullname).catch(() => {});
+    WelcomeEmail(user.email, user.fullname).catch(() => { });
 
     return res.status(200).json({ success: true, message: "Email verified successfully" });
 
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Verify Email Error:", error);
+    return res.status(500).json({ success: false, message: error.message || "Internal server error" });
   }
 };
 
@@ -157,8 +157,8 @@ const forgotPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Forgot Password Error:", error);
+    res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
 
@@ -189,8 +189,8 @@ const resetPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Reset Password Error:", error);
+    res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
 
@@ -221,12 +221,12 @@ const resendVerificationCode = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Resend OTP Error:", error);
+    res.status(500).json({ success: false, message: error.message || "Server error" });
   }
 };
 
-module.exports = { 
+module.exports = {
   userRegister,
   userLogin,
   userLogout,
