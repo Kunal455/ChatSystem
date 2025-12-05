@@ -136,11 +136,12 @@ const verifyEmail = async (req, res) => {
     await user.save();
 
 
-    try {
-      await WelcomeEmail(user.email, user.fullname);
-    } catch (emailError) {
+    // Send welcome email asynchronously (fire and forget)
+    WelcomeEmail(user.email, user.fullname).catch(emailError => {
       console.error("Failed to send welcome email:", emailError);
-    }
+    });
+
+    return res.status(200).json({ success: true, message: "Email verified successfully" });
   } catch (error) {
     console.log(error)
     return res.status(500).json({ success: false, message: "internal server error" })
