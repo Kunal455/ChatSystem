@@ -54,9 +54,16 @@ const Login = () => {
     } catch (error) {
       setLoading(false);
       console.log(error);
-      toast.error(
-        error?.response?.data?.message || "Something went wrong!"
-      );
+      const errMsg = error?.response?.data?.message || "Something went wrong!";
+
+      if (errMsg.toLowerCase().includes("verify your email")) {
+        localStorage.setItem("verifyEmail", userInput.email);
+        toast.info("Please complete verification.");
+        navigate("/verify");
+        return;
+      }
+
+      toast.error(errMsg);
     }
   };
   return (

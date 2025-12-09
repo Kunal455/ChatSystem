@@ -83,6 +83,7 @@ const Register = () => {
       // ⛔ NO setAuthUser
       // ⛔ NO localStorage
 
+      localStorage.setItem("verifyEmail", inputData.email);
       navigate("/verify");
 
     } catch (error) {

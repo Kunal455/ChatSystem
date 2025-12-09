@@ -53,6 +53,7 @@ app.use((req, res, next) => {
 // Configure CORS with a safe origin checker and explicit known origins
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   "https://chat-system-puce-ten.vercel.app",
   /\.vercel\.app$/,
 ];
