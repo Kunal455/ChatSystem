@@ -11,7 +11,7 @@ const login = async () => {
         if (error.response) {
             console.log('Error Response:', error.response.status, error.response.data);
         } else {
-            console.log('Error:', error.message);
+            console.log('Error:', error);
         }
     }
 };
