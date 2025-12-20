@@ -59,20 +59,7 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    // allow requests with no origin (like mobile apps, curl, server-to-server)
-    if (!origin) return callback(null, true);
-    for (const o of allowedOrigins) {
-      if (o instanceof RegExp) {
-        if (o.test(origin)) return callback(null, true);
-      } else if (o === origin) {
-        return callback(null, true);
-      }
-    }
-    // log rejected origin for debugging
-    console.warn(`CORS rejection: origin=${origin}`);
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: "*",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -130,7 +117,7 @@ server.listen(PORT, () =>
   console.log(`✅ Server running on port ${PORT}`.bgMagenta)
 );
 
-// === GLOBAL ERROR HANDLERS ===
+
 process.on('uncaughtException', (err) => {
   console.error(' UNCAUGHT EXCEPTION:', err.message);
   console.error(err.stack);
