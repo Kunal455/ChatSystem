@@ -41,16 +41,17 @@ const Reset_Password_Template = (code) => `
 // ================= SEND MAIL (RESEND) =================
 const sendMail = async (to, subject, html) => {
   try {
-    // Dev safety
+    // ✅ DEV MODE (local testing)
     if (process.env.NODE_ENV !== "production") {
       console.log("📧 DEV EMAIL →", to);
-      console.log(subject);
+      console.log("SUBJECT:", subject);
       console.log(html);
       return true;
     }
 
+    // ✅ PRODUCTION MODE
     await resend.emails.send({
-      from: "Talkio <onboarding@resend.dev>", // works without domain
+      from: "Talkio <no-reply@talkio.space>", // 🔥 FIXED
       to,
       subject,
       html,
@@ -60,22 +61,34 @@ const sendMail = async (to, subject, html) => {
     return true;
 
   } catch (error) {
-    console.error("❌ Resend email failed:", error.message);
+    console.error("❌ Resend email failed:", error);
     return false;
   }
 };
 
 // ================= PUBLIC FUNCTIONS =================
 const sendVerificationCode = async (email, code) => {
-  return sendMail(email, "Verify your Email", Verification_Email_Template(code));
+  return sendMail(
+    email,
+    "Verify your Email",
+    Verification_Email_Template(code)
+  );
 };
 
 const WelcomeEmail = async (email, name) => {
-  return sendMail(email, "Welcome to Talkio!", Welcome_Email_Template(name));
+  return sendMail(
+    email,
+    "Welcome to Talkio!",
+    Welcome_Email_Template(name)
+  );
 };
 
 const ResetPasswordEmail = async (email, code) => {
-  return sendMail(email, "Reset Your Password", Reset_Password_Template(code));
+  return sendMail(
+    email,
+    "Reset Your Password",
+    Reset_Password_Template(code)
+  );
 };
 
 module.exports = {
