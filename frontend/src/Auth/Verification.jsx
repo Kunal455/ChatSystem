@@ -40,7 +40,7 @@ const Verification = () => {
         setLoading(true);
 
         try {
-            const res = await axios.post("/api/auth/verifyemail", { code });
+            const res = await axios.post("/api/auth/verifyemail", { email, code });
 
             if (res.data.success) {
                 toast.success("Email verified successfully!");
