@@ -1,11 +1,11 @@
-const User = require('../model/userModel');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const User = require("../model/userModel");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const {
   sendVerificationCode,
   WelcomeEmail,
   ResetPasswordEmail
-} = require('../middleware/Email');
+} = require("../middleware/Email");
 
 // ================= HELPERS =================
 const generateToken = (userId) =>
@@ -14,15 +14,17 @@ const generateToken = (userId) =>
 const generate6DigitCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
-const OTP_EXPIRY = 10 * 60 * 1000; // 10 min
-const RESEND_COOLDOWN = 60 * 1000; // 60 sec
+const OTP_EXPIRY = 10 * 60 * 1000; // 10 minutes
+const RESEND_COOLDOWN = 60 * 1000; // 60 seconds
 
-// ================== REGISTER ==================
+// ================= REGISTER =================
 const userRegister = async (req, res) => {
   try {
     const { fullname, username, email, gender, password } = req.body;
 
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    const existingUser = await User.findOne({
+      $or: [{ email }, { username }]
+    });
 
     if (existingUser) {
       if (!existingUser.isVerified) {
@@ -37,27 +39,26 @@ const userRegister = async (req, res) => {
       });
     }
 
-    const hashPassword = await bcrypt.hash(password, 10);
-    const verificationCode = generate6DigitCode();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = generate6DigitCode();
 
-    const profilepicUrl = req.file
-      ? req.file.path
-      : "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+    const profilepic =
+      req.file?.path ||
+      "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
 
-    const newUser = await User.create({
+    const user = await User.create({
       fullname,
       username,
       email,
       gender,
-      password: hashPassword,
-      profilepic: profilepicUrl,
-      verificationCode,
+      password: hashedPassword,
+      profilepic,
+      verificationCode: otp,
       otpExpires: Date.now() + OTP_EXPIRY,
       lastOtpSentAt: Date.now()
     });
 
-    const sent = await sendVerificationCode(email, verificationCode);
-
+    const sent = await sendVerificationCode(email, otp);
     if (!sent) {
       return res.status(500).json({
         success: false,
@@ -70,13 +71,13 @@ const userRegister = async (req, res) => {
       message: "Registered successfully. Please verify your email."
     });
 
-  } catch (error) {
-    console.error("Register Error:", error);
+  } catch (err) {
+    console.error("Register Error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ================== LOGIN ==================
+// ================= LOGIN =================
 const userLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -88,7 +89,7 @@ const userLogin = async (req, res) => {
     if (!user.isVerified)
       return res.status(403).json({
         success: false,
-        message: "Please verify your email before logging in"
+        message: "Please verify your email first"
       });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -108,36 +109,41 @@ const userLogin = async (req, res) => {
       user
     });
 
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ================== LOGOUT ==================
+// ================= LOGOUT =================
 const userLogout = (req, res) => {
   res.cookie("jwt", "", { maxAge: 0 });
-  res.status(200).json({ success: true, message: "Logged out" });
+  res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
-// ================== VERIFY EMAIL ==================
+// ================= VERIFY EMAIL =================
 const verifyEmail = async (req, res) => {
   try {
     const { email, code } = req.body;
+    const inputCode = String(code).trim();
 
     const user = await User.findOne({ email });
     if (!user)
-      return res.status(400).json({ success: false, message: "Invalid code" });
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
 
     if (user.isVerified)
-      return res.status(400).json({ success: false, message: "Already verified" });
+      return res.status(400).json({ success: false, message: "Email already verified" });
 
-    if (
-      user.verificationCode !== code ||
-      user.otpExpires < Date.now()
-    ) {
+    if (user.otpExpires < Date.now()) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired code"
+        message: "OTP expired. Please resend."
+      });
+    }
+
+    if (user.verificationCode !== inputCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP. Please use the latest code."
       });
     }
 
@@ -154,12 +160,12 @@ const verifyEmail = async (req, res) => {
       message: "Email verified successfully"
     });
 
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ================== FORGOT PASSWORD ==================
+// ================= FORGOT PASSWORD =================
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -168,44 +174,48 @@ const forgotPassword = async (req, res) => {
     if (!user)
       return res.status(400).json({ success: false, message: "Email not found" });
 
-    const resetCode = generate6DigitCode();
+    const otp = generate6DigitCode();
 
-    user.verificationCode = resetCode;
+    user.verificationCode = otp;
     user.otpExpires = Date.now() + OTP_EXPIRY;
     user.lastOtpSentAt = Date.now();
-
     await user.save();
 
-    const sent = await ResetPasswordEmail(email, resetCode);
+    const sent = await ResetPasswordEmail(email, otp);
     if (!sent)
-      return res.status(500).json({ success: false, message: "Failed to send reset email" });
+      return res.status(500).json({ success: false, message: "Failed to send reset OTP" });
 
     res.status(200).json({
       success: true,
-      message: "Reset code sent to email"
+      message: "Reset OTP sent to email"
     });
 
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ================== RESET PASSWORD ==================
+// ================= RESET PASSWORD =================
 const resetPassword = async (req, res) => {
   try {
     const { email, code, newPassword } = req.body;
+    const inputCode = String(code).trim();
 
     const user = await User.findOne({ email });
     if (!user)
       return res.status(400).json({ success: false, message: "Invalid request" });
 
-    if (
-      user.verificationCode !== code ||
-      user.otpExpires < Date.now()
-    ) {
+    if (user.otpExpires < Date.now()) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired code"
+        message: "OTP expired. Please resend."
+      });
+    }
+
+    if (user.verificationCode !== inputCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP"
       });
     }
 
@@ -221,12 +231,12 @@ const resetPassword = async (req, res) => {
       message: "Password reset successful"
     });
 
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// ================== RESEND OTP ==================
+// ================= RESEND OTP =================
 const resendVerificationCode = async (req, res) => {
   try {
     const { email } = req.body;
@@ -251,14 +261,14 @@ const resendVerificationCode = async (req, res) => {
       });
     }
 
-    const newCode = generate6DigitCode();
+    const otp = generate6DigitCode();
 
-    user.verificationCode = newCode;
+    user.verificationCode = otp;
     user.otpExpires = Date.now() + OTP_EXPIRY;
     user.lastOtpSentAt = Date.now();
     await user.save();
 
-    const sent = await sendVerificationCode(email, newCode);
+    const sent = await sendVerificationCode(email, otp);
     if (!sent)
       return res.status(500).json({
         success: false,
@@ -267,14 +277,15 @@ const resendVerificationCode = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Verification code resent successfully"
+      message: "OTP resent successfully. Use the latest code."
     });
 
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+// ================= EXPORTS =================
 module.exports = {
   userRegister,
   userLogin,
