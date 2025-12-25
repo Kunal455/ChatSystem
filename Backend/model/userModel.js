@@ -1,23 +1,55 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const userSchema = mongoose.Schema({
-  fullname: { type: String, required: true },
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  gender: { type: String, required: true, enum: ['male', 'female'] },
-  password: { type: String, required: true, minlength: 6 },
-  profilepic: {
-    type: String,
-    required: true,
-    default: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"
+const userSchema = mongoose.Schema(
+  {
+    fullname: { type: String, required: true },
+
+    username: { type: String, required: true, unique: true },
+
+    email: { type: String, required: true, unique: true },
+
+    gender: {
+      type: String,
+      required: true,
+      enum: ["male", "female"],
+    },
+
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+    },
+
+    profilepic: {
+      type: String,
+      required: true,
+      default:
+        "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
+    },
+
+    // ================= VERIFICATION =================
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    verificationCode: {
+      type: String,
+    },
+
+    otpExpires: {
+      type: Date,
+    },
+
+    // 🔥 NEW: resend cooldown tracking
+    lastOtpSentAt: {
+      type: Date,
+    },
   },
-  isVerified: {
-    type: Boolean,
-    default: false
-  },
-  verificationCode: String,
-  otpExpires: Date
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 const User = mongoose.model("User", userSchema);
 module.exports = User;
+
+

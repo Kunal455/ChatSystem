@@ -1,13 +1,6 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-// ================= TRANSPORTER =================
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ================= EMAIL TEMPLATES =================
 const Verification_Email_Template = (code) => `
@@ -45,34 +38,44 @@ const Reset_Password_Template = (code) => `
 </html>
 `;
 
-// ================= SEND MAIL =================
+// ================= SEND MAIL (RESEND) =================
 const sendMail = async (to, subject, html) => {
-  // Development safety
-  if (process.env.NODE_ENV === "development") {
-    console.log("📧 DEV EMAIL →", to);
-    console.log(html);
-    return;
-  }
+  try {
+    // Dev safety
+    if (process.env.NODE_ENV !== "production") {
+      console.log("📧 DEV EMAIL →", to);
+      console.log(subject);
+      console.log(html);
+      return true;
+    }
 
-  await transporter.sendMail({
-    from: `"Talkio" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  });
+    await resend.emails.send({
+      from: "Talkio <onboarding@resend.dev>", // works without domain
+      to,
+      subject,
+      html,
+    });
+
+    console.log("✅ Email sent via Resend →", to);
+    return true;
+
+  } catch (error) {
+    console.error("❌ Resend email failed:", error.message);
+    return false;
+  }
 };
 
 // ================= PUBLIC FUNCTIONS =================
 const sendVerificationCode = async (email, code) => {
-  await sendMail(email, "Verify your Email", Verification_Email_Template(code));
+  return sendMail(email, "Verify your Email", Verification_Email_Template(code));
 };
 
 const WelcomeEmail = async (email, name) => {
-  await sendMail(email, "Welcome to Talkio!", Welcome_Email_Template(name));
+  return sendMail(email, "Welcome to Talkio!", Welcome_Email_Template(name));
 };
 
 const ResetPasswordEmail = async (email, code) => {
-  await sendMail(email, "Reset Your Password", Reset_Password_Template(code));
+  return sendMail(email, "Reset Your Password", Reset_Password_Template(code));
 };
 
 module.exports = {

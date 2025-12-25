@@ -1,14 +1,21 @@
 const User = require('../model/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sendVerificationCode, WelcomeEmail, ResetPasswordEmail } = require('../middleware/Email');
+const {
+  sendVerificationCode,
+  WelcomeEmail,
+  ResetPasswordEmail
+} = require('../middleware/Email');
 
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
-};
+// ================= HELPERS =================
+const generateToken = (userId) =>
+  jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
 const generate6DigitCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
+
+const OTP_EXPIRY = 10 * 60 * 1000; // 10 min
+const RESEND_COOLDOWN = 60 * 1000; // 60 sec
 
 // ================== REGISTER ==================
 const userRegister = async (req, res) => {
@@ -16,69 +23,56 @@ const userRegister = async (req, res) => {
     const { fullname, username, email, gender, password } = req.body;
 
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+
     if (existingUser) {
-  if (!existingUser.isVerified) {
-    return res.status(400).json({
-      success: false,
-      message: "Email already registered. Please verify your email or resend OTP."
-    });
-  }
-
-  return res.status(400).json({
-    success: false,
-    message: "Email already in use. Please login."
-  });
-}
-
+      if (!existingUser.isVerified) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already registered. Please verify or resend OTP."
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: "Email already in use. Please login."
+      });
+    }
 
     const hashPassword = await bcrypt.hash(password, 10);
     const verificationCode = generate6DigitCode();
 
-    let profilepicUrl = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
+    const profilepicUrl = req.file
+      ? req.file.path
+      : "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg";
 
-    if (req.file) profilepicUrl = req.file.path;
-
-    const newUser = new User({
+    const newUser = await User.create({
       fullname,
       username,
       email,
-      password: hashPassword,
       gender,
+      password: hashPassword,
       profilepic: profilepicUrl,
       verificationCode,
-      otpExpires: Date.now() + 10 * 60 * 1000 // OTP valid for 10 minutes
+      otpExpires: Date.now() + OTP_EXPIRY,
+      lastOtpSentAt: Date.now()
     });
 
-    // LOG CODE FOR MANUAL VERIFICATION (Since Mailjet is blocked)
-    console.log("==========================================");
-    console.log("MANUAL VERIFICATION CODE:", verificationCode);
-    console.log("==========================================");
+    const sent = await sendVerificationCode(email, verificationCode);
 
-    await newUser.save();
-
-    // Send Email Once
-    try {
-      await sendVerificationCode(newUser.email, verificationCode);
-    } catch (emailError) {
-      console.error("Failed to send verification email:", emailError.message);
-      // Continue registration even if email fails
+    if (!sent) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send verification email"
+      });
     }
 
     res.status(201).json({
       success: true,
-      message: "Registered successfully. Please verify your email.",
-      user: {
-        _id: newUser._id,
-        fullname: newUser.fullname,
-        username: newUser.username,
-        email: newUser.email,
-        profilepic: newUser.profilepic,
-      }
+      message: "Registered successfully. Please verify your email."
     });
 
   } catch (error) {
     console.error("Register Error:", error);
-    res.status(500).json({ success: false, message: error.message || "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -88,57 +82,36 @@ const userLogin = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Email not registered"
-      });
-    }
+    if (!user)
+      return res.status(400).json({ success: false, message: "Email not registered" });
 
-    // 🔴 BLOCK UNVERIFIED USERS
-    if (!user.isVerified) {
+    if (!user.isVerified)
       return res.status(403).json({
         success: false,
         message: "Please verify your email before logging in"
       });
-    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid credentials"
-      });
-    }
+    if (!isMatch)
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
 
     res.cookie("jwt", generateToken(user._id), {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Login successful",
-      user: {
-        _id: user._id,
-        fullname: user.fullname,
-        username: user.username,
-        email: user.email,
-        gender: user.gender,
-        profilepic: user.profilepic,
-      }
+      user
     });
 
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message || "Server error"
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 // ================== LOGOUT ==================
 const userLogout = (req, res) => {
@@ -149,27 +122,40 @@ const userLogout = (req, res) => {
 // ================== VERIFY EMAIL ==================
 const verifyEmail = async (req, res) => {
   try {
-    const { code } = req.body;
-    const user = await User.findOne({ verificationCode: code });
+    const { email, code } = req.body;
 
+    const user = await User.findOne({ email });
     if (!user)
-      return res.status(400).json({ success: false, message: "Invalid or expired code" });
+      return res.status(400).json({ success: false, message: "Invalid code" });
 
-    if (user.otpExpires < Date.now())
-      return res.status(400).json({ success: false, message: "Code expired, request a new one" });
+    if (user.isVerified)
+      return res.status(400).json({ success: false, message: "Already verified" });
+
+    if (
+      user.verificationCode !== code ||
+      user.otpExpires < Date.now()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired code"
+      });
+    }
 
     user.isVerified = true;
     user.verificationCode = undefined;
     user.otpExpires = undefined;
+    user.lastOtpSentAt = undefined;
+
     await user.save();
+    WelcomeEmail(user.email, user.fullname).catch(() => {});
 
-    WelcomeEmail(user.email, user.fullname).catch(() => { });
-
-    return res.status(200).json({ success: true, message: "Email verified successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully"
+    });
 
   } catch (error) {
-    console.error("Verify Email Error:", error);
-    return res.status(500).json({ success: false, message: error.message || "Internal server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -185,10 +171,14 @@ const forgotPassword = async (req, res) => {
     const resetCode = generate6DigitCode();
 
     user.verificationCode = resetCode;
-    user.otpExpires = Date.now() + 10 * 60 * 1000;
+    user.otpExpires = Date.now() + OTP_EXPIRY;
+    user.lastOtpSentAt = Date.now();
+
     await user.save();
 
-    await ResetPasswordEmail(email, resetCode);
+    const sent = await ResetPasswordEmail(email, resetCode);
+    if (!sent)
+      return res.status(500).json({ success: false, message: "Failed to send reset email" });
 
     res.status(200).json({
       success: true,
@@ -196,29 +186,33 @@ const forgotPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Forgot Password Error:", error);
-    res.status(500).json({ success: false, message: error.message || "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
 // ================== RESET PASSWORD ==================
 const resetPassword = async (req, res) => {
   try {
-    const { code, newPassword } = req.body;
+    const { email, code, newPassword } = req.body;
 
-    const user = await User.findOne({ verificationCode: code });
-
+    const user = await User.findOne({ email });
     if (!user)
-      return res.status(400).json({ success: false, message: "Invalid or expired code" });
+      return res.status(400).json({ success: false, message: "Invalid request" });
 
-    if (user.otpExpires < Date.now())
-      return res.status(400).json({ success: false, message: "Code expired, request again" });
+    if (
+      user.verificationCode !== code ||
+      user.otpExpires < Date.now()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired code"
+      });
+    }
 
-    const hashed = await bcrypt.hash(newPassword, 10);
-
-    user.password = hashed;
+    user.password = await bcrypt.hash(newPassword, 10);
     user.verificationCode = undefined;
     user.otpExpires = undefined;
+    user.lastOtpSentAt = undefined;
 
     await user.save();
 
@@ -228,8 +222,7 @@ const resetPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Reset Password Error:", error);
-    res.status(500).json({ success: false, message: error.message || "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -238,72 +231,47 @@ const resendVerificationCode = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // 1️⃣ Validate input
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required"
-      });
-    }
-
-    // 2️⃣ Find user
     const user = await User.findOne({ email });
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-
-    // 3️⃣ Already verified
-    if (user.isVerified) {
+    if (user.isVerified)
       return res.status(400).json({
         success: false,
-        message: "Email already verified. Please login."
+        message: "Email already verified"
+      });
+
+    if (
+      user.lastOtpSentAt &&
+      Date.now() - user.lastOtpSentAt < RESEND_COOLDOWN
+    ) {
+      return res.status(429).json({
+        success: false,
+        message: "Please wait 60 seconds before resending OTP"
       });
     }
 
-    // 4️⃣ Cooldown (60 seconds)
-    // ⏱️ Resend cooldown (ONLY in production)
-if (
-  process.env.NODE_ENV === "production" &&
-  user.otpExpires &&
-  user.otpExpires > Date.now() - 60 * 1000
-) {
-  return res.status(429).json({
-    success: false,
-    message: "Please wait 60 seconds before requesting another code"
-  });
-}
-
-
-    // 5️⃣ Generate OTP
     const newCode = generate6DigitCode();
 
     user.verificationCode = newCode;
-    user.otpExpires = Date.now() + 10 * 60 * 1000;
-
+    user.otpExpires = Date.now() + OTP_EXPIRY;
+    user.lastOtpSentAt = Date.now();
     await user.save();
 
-    // 6️⃣ Send email (DO NOT crash if email fails)
-    try {
-      await sendVerificationCode(user.email, newCode);
-    } catch (mailError) {
-      console.error("Email send failed (OTP still valid):", mailError.message);
-    }
+    const sent = await sendVerificationCode(email, newCode);
+    if (!sent)
+      return res.status(500).json({
+        success: false,
+        message: "Failed to resend OTP"
+      });
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Verification code resent successfully"
     });
 
   } catch (error) {
-    console.error("Resend Verification Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error"
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
