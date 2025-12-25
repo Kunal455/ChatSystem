@@ -59,7 +59,15 @@ const Login = () => {
 
       if (errMsg.toLowerCase().includes("verify your email")) {
         localStorage.setItem("verifyEmail", userInput.email);
-        toast.info("Please complete verification.");
+
+        // Auto-resend code so user has a fresh one
+        try {
+          await axios.post("/api/auth/resend-code", { email: userInput.email });
+          toast.info("New verification code sent!");
+        } catch (resendError) {
+          console.error("Auto-resend failed:", resendError);
+        }
+
         navigate("/verify");
         return;
       }
