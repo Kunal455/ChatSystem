@@ -140,10 +140,12 @@ const verifyEmail = async (req, res) => {
       });
     }
 
+    console.log(`[VERIFY DEBUG] Stored: '${user.verificationCode}' (${typeof user.verificationCode}) | Input: '${inputCode}' (${typeof inputCode})`);
+
     if (user.verificationCode !== inputCode) {
       return res.status(400).json({
         success: false,
-        message: "Invalid OTP. Please use the latest code."
+        message: `Invalid OTP. Expected: ${user.verificationCode}, Received: ${inputCode}`
       });
     }
 
@@ -153,7 +155,7 @@ const verifyEmail = async (req, res) => {
     user.lastOtpSentAt = undefined;
 
     await user.save();
-    WelcomeEmail(user.email, user.fullname).catch(() => {});
+    WelcomeEmail(user.email, user.fullname).catch(() => { });
 
     res.status(200).json({
       success: true,
