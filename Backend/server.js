@@ -81,6 +81,11 @@ app.get("/", (req, res) => {
   res.send("API is running 🚀");
 });
 
+
+app.get("/test", (req, res) => {
+  res.json({ ok: true });
+});
+
 // ================= 404 =================
 app.use((req, res) => {
   res.status(404).json({
