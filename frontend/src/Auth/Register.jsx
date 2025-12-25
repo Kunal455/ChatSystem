@@ -84,6 +84,7 @@ const Register = () => {
       // ⛔ NO localStorage
 
       localStorage.setItem("verifyEmail", inputData.email);
+      toast.success(res.data.message);
       navigate("/verify");
 
     } catch (error) {

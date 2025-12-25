@@ -1,26 +1,43 @@
-const jwt = require('jsonwebtoken');
-const User = require('../model/userModel');
+const jwt = require("jsonwebtoken");
+const User = require("../model/userModel");
 
 const isLogin = async (req, res, next) => {
   try {
     const token = req.cookies.jwt;
 
-    if (!token)
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      });
+    }
 
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId).select("-password");
 
-    const user = await User.findById(decode.userId).select("-password");
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token"
+      });
+    }
 
-    if (!user)
-      return res.status(401).json({ success: false, message: "Invalid token" });
+    // 🔴 BLOCK UNVERIFIED USERS
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Email not verified"
+      });
+    }
 
     req.user = user;
-
     next();
 
   } catch (error) {
-    return res.status(401).json({ success: false, message: "Unauthorized" });
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized"
+    });
   }
 };
 

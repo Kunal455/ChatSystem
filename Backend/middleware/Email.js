@@ -1,106 +1,79 @@
-// Backend/middleware/Email.js
+const nodemailer = require("nodemailer");
 
-const Mailjet = require("node-mailjet");
+// ================= TRANSPORTER =================
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
-const mailjet = Mailjet.apiConnect(
-  process.env.MAILJET_API_KEY,
-  process.env.MAILJET_SECRET_KEY
-);
-
-// ===================================================
-// EMAIL TEMPLATES
-// ===================================================
-
-const Verification_Email_Template = `
+// ================= EMAIL TEMPLATES =================
+const Verification_Email_Template = (code) => `
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-...
-<span class="verification-code">{verificationCode}</span>
-...
+<html>
+<body>
+  <h2>Email Verification</h2>
+  <p>Your verification code is:</p>
+  <h1 style="letter-spacing:4px;">${code}</h1>
+  <p>This code is valid for 10 minutes.</p>
+</body>
 </html>
 `;
 
-const Welcome_Email_Template = `
+const Welcome_Email_Template = (name) => `
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-...
-<p class="welcome-message">Hello {name},</p>
-...
+<html>
+<body>
+  <h2>Welcome to Talkio 🎉</h2>
+  <p>Hello <b>${name}</b>,</p>
+  <p>Your account has been successfully verified.</p>
+</body>
 </html>
 `;
 
 const Reset_Password_Template = (code) => `
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <body>
-<h2>Password Reset Request</h2>
-<p>Your reset code:</p>
-<h1 style="letter-spacing:5px;">${code}</h1>
-<p>This code expires in 15 minutes.</p>
+  <h2>Password Reset</h2>
+  <p>Your reset code:</p>
+  <h1>${code}</h1>
+  <p>This code expires in 10 minutes.</p>
 </body>
 </html>
 `;
 
-// ===================================================
-// MAILJET SENDER FUNCTION
-// ===================================================
-
-async function sendMail(to, subject, html) {
-  try {
-    const request = await mailjet.post("send", { version: "v3.1" }).request({
-      Messages: [
-        {
-          From: {
-            Email: "noreply@yourdomain.com",
-            Name: "Talkio",
-          },
-          To: [
-            {
-              Email: to,
-            },
-          ],
-          Subject: subject,
-          HTMLPart: html,
-        },
-      ],
-    });
-
-    console.log("Mailjet: Email sent", request.body);
-    return request.body;
-  } catch (error) {
-    console.error("Mailjet error:", error);
-    throw error;
+// ================= SEND MAIL =================
+const sendMail = async (to, subject, html) => {
+  // Development safety
+  if (process.env.NODE_ENV === "development") {
+    console.log("📧 DEV EMAIL →", to);
+    console.log(html);
+    return;
   }
-}
 
-// ===================================================
-// PUBLIC EMAIL FUNCTIONS
-// ===================================================
+  await transporter.sendMail({
+    from: `"Talkio" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    html,
+  });
+};
 
-// 1. Send Verification Email
+// ================= PUBLIC FUNCTIONS =================
 const sendVerificationCode = async (email, code) => {
-  const html = Verification_Email_Template.replace("{verificationCode}", code);
-  return sendMail(email, "Verify your Email", html);
+  await sendMail(email, "Verify your Email", Verification_Email_Template(code));
 };
 
-// 2. Send Welcome Email
 const WelcomeEmail = async (email, name) => {
-  const html = Welcome_Email_Template.replace("{name}", name);
-  return sendMail(email, "Welcome to Talkio!", html);
+  await sendMail(email, "Welcome to Talkio!", Welcome_Email_Template(name));
 };
 
-// 3. Send Reset Password Email
 const ResetPasswordEmail = async (email, code) => {
-  return sendMail(email, "Reset Your Password", Reset_Password_Template(code));
+  await sendMail(email, "Reset Your Password", Reset_Password_Template(code));
 };
-
-// ===================================================
-// EXPORT
-// ===================================================
 
 module.exports = {
   sendVerificationCode,

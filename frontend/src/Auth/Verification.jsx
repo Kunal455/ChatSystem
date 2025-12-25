@@ -65,7 +65,9 @@ const Verification = () => {
             await axios.post("/api/auth/resend-code", { email });
             toast.success("Verification code resent!");
         } catch (error) {
-            toast.error("Could not resend code");
+            const errMsg = error?.response?.data?.message || "Could not resend code";
+            toast.error(errMsg);
+            console.error("Resend Error:", error);
         }
     };
 
@@ -84,7 +86,7 @@ const Verification = () => {
 
                 {/* FORM */}
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    
+
                     <div>
                         <label className="block text-gray-200 font-semibold mb-2">
                             Enter Verification Code

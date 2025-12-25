@@ -34,7 +34,7 @@ const Login = () => {
       return toast.error("Please use a @gmail.com email address");
     }
     try {
-      const res = await axios.post("/api/auth/login", userInput);
+      const res = await axios.post("/api/auth/login", userInput, { withCredentials: true });
       const data = res.data;
 
       if (data.success === false) {
@@ -52,6 +52,7 @@ const Login = () => {
       setLoading(false);
       navigate("/");
     } catch (error) {
+      setLoading(false);
       setLoading(false);
       console.log(error);
       const errMsg = error?.response?.data?.message || "Something went wrong!";
