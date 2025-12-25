@@ -51,11 +51,12 @@ const sendMail = async (to, subject, html) => {
 
     // ✅ PRODUCTION MODE
     await resend.emails.send({
-      from: "Talkio <no-reply@talkio.space>", // 🔥 FIXED
-      to,
-      subject,
-      html,
-    });
+  from: `Talkio <${process.env.FROM_EMAIL}>`,
+  to,
+  subject,
+  html,
+});
+
 
     console.log("✅ Email sent via Resend →", to);
     return true;
