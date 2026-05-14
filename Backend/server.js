@@ -9,9 +9,14 @@ require("dotenv").config(); // ✅ Load env ONCE
 
 const connectDB = require("./DB/db");
 const { app, server } = require("./Socket/socket");
+const { connectKafka } = require("./config/kafka");
+const startChatWorker = require("./worker/chatWorker");
 
-// ================= DB =================
+// ================= DB & KAFKA =================
 connectDB();
+connectKafka().then(() => {
+  startChatWorker();
+});
 
 // ================= ENV CHECK =================
 const requiredEnv = [

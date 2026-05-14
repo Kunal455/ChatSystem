@@ -1,6 +1,8 @@
 const Conversation = require("../model/conversationModel");
 const Message = require("../model/messageSchema");
 const { getReceiverSocketId, io } = require("../Socket/socket");
+const { producer } = require("../config/kafka");
+const { v4: uuidv4 } = require("uuid");
 
 const sendMessage = async (req, res) => {
   try {
@@ -8,30 +10,47 @@ const sendMessage = async (req, res) => {
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
-    let chat = await Conversation.findOne({
-      participants: { $all: [senderId, receiverId] },
-    });
+    // Create a temporary ID for immediate UI feedback
+    const tempMessageId = uuidv4();
 
-    if (!chat) {
-      chat = await Conversation.create({ participants: [senderId, receiverId] });
-    }
-
-    const newMessage = new Message({
+    const messagePayload = {
+      tempId: tempMessageId,
       senderId,
-      receiverId: receiverId,
+      receiverId,
       message,
-      conversationId: chat._id,
+      timestamp: new Date().toISOString()
+    };
+
+    // 1. Send the message immediately via Socket.io (Optimistic delivery)
+    // Here we wrap in a format the frontend expects (like a mongoose document)
+    io.to(receiverId.toString()).emit("newMessage", {
+      _id: tempMessageId,
+      senderId,
+      receiverId,
+      message,
+      createdAt: messagePayload.timestamp,
     });
 
+    // 2. Publish to Kafka Topic for asynchronous processing
+    await producer.send({
+      topic: 'chat-messages',
+      messages: [
+        { 
+          key: receiverId.toString(), // Keep ordering for the same receiver
+          value: JSON.stringify(messagePayload) 
+        },
+      ],
+    });
 
-    chat.messages.push(newMessage._id);
-
-    await Promise.all([chat.save(), newMessage.save()]);
-
-    // Emit to receiver's room
-    io.to(receiverId.toString()).emit("newMessage", newMessage);
-
-    res.status(201).json(newMessage);
+    // 3. Respond to the API request immediately (Don't wait for DB!)
+    res.status(202).json({
+      _id: tempMessageId,
+      senderId,
+      receiverId,
+      message,
+      createdAt: messagePayload.timestamp,
+      status: 'processing'
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
